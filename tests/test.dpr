@@ -17,13 +17,7 @@ uses
   Deltics.Xml.Schema.Reader in '..\src\Deltics.Xml.Schema.Reader.pas',
   Deltics.Xml.Schema.Writer in '..\src\Deltics.Xml.Schema.Writer.pas',
   Deltics.Xml.Selections in '..\src\Deltics.Xml.Selections.pas',
-  Deltics.Xml.Writer in '..\src\Deltics.Xml.Writer.pas',
-  Deltics.Xml.Node in '..\src\Deltics.Xml.Node.pas',
-  Deltics.Xml.Types in '..\src\Deltics.Xml.Types.pas',
-  Deltics.Xml.Node.NamespaceNode in '..\src\Deltics.Xml.Node.NamespaceNode.pas',
-  Deltics.Xml.Node.NamespaceNode.Attribute in '..\src\Deltics.Xml.Node.NamespaceNode.Attribute.pas',
-  Deltics.Xml.Interfaces in '..\src\Deltics.Xml.Interfaces.pas',
-  Deltics.Xml.XPath in '..\src\Deltics.Xml.XPath.pas';
+  Deltics.Xml.Writer in '..\src\Deltics.Xml.Writer.pas';
 
 begin
 end.
