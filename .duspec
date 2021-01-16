@@ -1,15 +1,11 @@
 {
-  "id":"deltics.streams",
+  "id":"deltics.xml",
   "version":"",
-  "summary":"Provides various stream classes, helpers and utilities.",
+  "summary":"Xml framework.",
   "tags":[
     "deltics",
     "delphi",
-    "unicode",
-    "streams",
-    "readers",
-    "writers",
-    "io"
+    "xml"
   ],
   "compiler":{
       "language":"pascal",
@@ -20,26 +16,23 @@
   "language":"en",
   "content":"source",
   "dependencies":[
-    "deltics.inc:1.1.0",
-    "deltics.exceptions:1.1.0",
-    "deltics.memento:1.0.0",
-    "deltics.pointers:1.1.1",
-    "deltics.strings:1.1.2"
+    "deltics.inc:1.2.0",
+    "deltics.io.streams:1.0.0-beta.36",
+    "deltics.strings:1.2.0-beta.11"
   ],
   "source":{
       "files":[
-        "src\\deltics.io.streams.inc",
-        "src\\Deltics.IO.Streams.pas",
-        "src\\Deltics.IO.Streams.Buffered.pas",
-        "src\\Deltics.IO.Streams.Buffered.Reader.pas",
-        "src\\Deltics.IO.Streams.Buffered.Writer.pas",
-        "src\\Deltics.IO.Streams.Decorator.pas",
-        "src\\Deltics.IO.Streams.Interfaces.pas",
-        "src\\Deltics.IO.Streams.MemoryStream.pas",
-        "src\\Deltics.IO.Streams.PositionMemento.pas",
-        "src\\Deltics.IO.Streams.StringStream.pas",
-        "src\\Deltics.IO.Streams.TextReader.pas",
-        "src\\Deltics.IO.Streams.TextReader.Utf8.pas"
+        "src\\deltics.xml.inc",
+        "src\\Deltics.Xml.pas",
+        "src\\Deltics.Xml.Dtd.pas",
+        "src\\Deltics.Xml.Parser.pas",
+        "src\\Deltics.Xml.Reader.pas",
+        "src\\Deltics.Xml.Schema.pas",
+        "src\\Deltics.Xml.Schema.Consts.pas",
+        "src\\Deltics.Xml.Schema.Reader.pas",
+        "src\\Deltics.Xml.Schema.Writer.pas",
+        "src\\Deltics.Xml.Selections.pas",
+        "src\\Deltics.Xml.Writer.pas"
       ]
     }
 }

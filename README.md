@@ -1,2 +1,2 @@
-# Deltics.IO.Streams
+# Deltics.XML
 
