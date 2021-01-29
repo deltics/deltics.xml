@@ -16,7 +16,7 @@
   "language":"en",
   "content":"source",
   "dependencies":[
-    "deltics.inc:1.2.0",
+    "deltics.inc:1.3.0",
     "deltics.io.streams:1.0.0-beta.36",
     "deltics.strings:1.2.0-beta.11"
   ],
