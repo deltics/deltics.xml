@@ -22,15 +22,11 @@ interface
     EXmlParser = class(Exception);
 
 
-    TXmlParser = class(TUtf8TextReader)
-    private
-      fMarkedLocations: TList;
-      fErrors: TStringList;
-      fWarnings: TStringList;
-      function ReplacePosTokens(const aMessage: String): String;
-    public
-      procedure AfterConstruction; override;
-    public
+    IXmlReader = interface(IUtf8Reader)
+    ['{7B49549F-7C9C-45DA-95F9-6B2C4B7FBEA4}']
+      function get_Errors: TStringList;
+      function get_Warnings: TStringList;
+
       procedure Abort(const aMessage: String; const aExceptionClass: ExceptionClass = NIL);
       procedure Error(const aMessage: String);
       procedure Warning(const aMessage: String);
@@ -55,6 +51,51 @@ interface
       function IsNameEndChar(const aChar: WideChar): Boolean;
       function IsValidNameChar(const aChar: WideChar): Boolean;
       function IsValidNameStartChar(const aChar: WideChar): Boolean;
+
+      property Errors: TStringList read get_Errors;
+      property Warnings: TStringList read get_Warnings;
+    end;
+
+
+    TXmlParser = class(TUtf8Reader, IXmlReader)
+    // IXmlReader
+    protected
+      function get_Errors: TStringList;
+      function get_Warnings: TStringList;
+      procedure Abort(const aMessage: String; const aExceptionClass: ExceptionClass = NIL);
+      procedure Error(const aMessage: String);
+      procedure Warning(const aMessage: String);
+      procedure ExpectChar(const aExpected: Utf8Char);
+      function ExpectOneOf(const aExpected: array of Utf8String): Integer;
+      procedure ExpectRealChar(const aExpected: Utf8Char);
+      procedure ExpectString(const aExpected: Utf8String);
+      procedure ExpectWhitespace;
+      procedure MarkLocation;
+      procedure UnmarkLocation;
+      function ReadName: Utf8String;
+      function ReadNameWithoutValidation: Utf8String;
+      function ReadWideName(const aValidate: Boolean = TRUE): Utf8String; deprecated;
+      function ReadAttributeValue: Utf8String;
+      function ReadQuotedString: Utf8String;
+      function ReadString: Utf8String; overload;
+      function ReadStringUntil(const aTerminator: Utf8Char): Utf8String; overload;
+      function ReadStringUntil(const aTerminator: Utf8String): Utf8String; overload;
+      procedure UnexpectedChar(const aChar: Utf8Char; const aMessage: String = '');
+      procedure UnexpectedEOF;
+      procedure UnexpectedString(const aString: String; const aMessage: String = '');
+      function IsNameEndChar(const aChar: WideChar): Boolean;
+      function IsValidNameChar(const aChar: WideChar): Boolean;
+      function IsValidNameStartChar(const aChar: WideChar): Boolean;
+
+    private
+      fMarkedLocations: TList;
+      fErrors: TStringList;
+      fWarnings: TStringList;
+      function ReplacePosTokens(const aMessage: String): String;
+    public
+      constructor Create(const aStream: TStream; const aErrors: TStringList; const aWarnings: TStringList);
+      procedure AfterConstruction; override;
+    public
       property Errors: TStringList read fErrors write fErrors;
       property Warnings: TStringList read fWarnings write fWarnings;
     end;
@@ -198,7 +239,21 @@ implementation
     for i := Low(BOM) to High(BOM) do
       AddBOMSignature(BOM[i]);
 *)
+    inherited;
+
     fMarkedLocations := TList.Create;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  constructor TXmlParser.Create(const aStream: TStream;
+                                const aErrors: TStringList;
+                                const aWarnings: TStringList);
+  begin
+    inherited Create(aStream);
+
+    fErrors   := aErrors;
+    fWarnings := aWarnings;
   end;
 
 
@@ -416,6 +471,20 @@ implementation
 
     if NOT EOF then
       MoveBack;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlParser.get_Errors: TStringList;
+  begin
+    result := fErrors;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlParser.get_Warnings: TStringList;
+  begin
+    result := fWarnings;
   end;
 
 
