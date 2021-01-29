@@ -2159,13 +2159,11 @@ implementation
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlText.get_ContainsReferences: Boolean;
-  const
-    BOOL: array[FALSE..TRUE] of NullableBoolean = (nbFALSE, nbTRUE);
   begin
-    if (fContainsReferences = nbNull) then
-      fContainsReferences := BOOL[Pos('&', STR.FromUtf8(fText)) > 0];
+    if fContainsReferences.IsNull then
+      fContainsReferences.Value := Pos('&', STR.FromUtf8(fText)) > 0;
 
-    result := IsTRUE(fContainsReferences);
+    result := fContainsReferences.Value;
   end;
 
 
