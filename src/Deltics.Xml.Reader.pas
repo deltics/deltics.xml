@@ -9,6 +9,7 @@ interface
   uses
     Classes,
     SysUtils,
+    Deltics.IO.Streams,
     Deltics.Strings,
     Deltics.Xml,
     Deltics.Xml.Parser;
@@ -23,7 +24,7 @@ interface
 
     TXmlReader = class
     private
-      fParser: TXmlParser;
+      fParser: IXmlReader;
     protected
       function ReadCDATA: TXmlCDATA;
       function ReadComment: TXmlComment;
@@ -116,11 +117,8 @@ implementation
 
     aDocument.Clear;
 
-    fParser := TXmlParser.Create(aStream);
+    fParser := TXmlParaser.Create(aStream, aDocument.Errors, aDocument.Warnings);
     try
-      fParser.Errors    := aDocument.Errors;
-      fParser.Warnings  := aDocument.Warnings;
-
       try
         while NOT fParser.EOF do
         begin
@@ -168,7 +166,7 @@ implementation
       end;
 
     finally
-      FreeAndNIL(fParser);
+      fParser := NIL;
     end;
 
   {$ifdef profile_XmlReader} finally profiler.Finish end; {$endif}
@@ -183,11 +181,8 @@ implementation
 
     aFragment.Clear;
 
-    fParser := TXmlParser.Create(aStream);
+    fParser := TXmlParser.Create(aStream, aFragment.Errors, aFragment.Warnings);
     try
-      fParser.Errors    := aFragment.Errors;
-      fParser.Warnings  := aFragment.Warnings;
-
       try
         while NOT fParser.EOF do
           aFragment.Add(ReadNode);
@@ -202,7 +197,7 @@ implementation
       end;
 
     finally
-      FreeAndNIL(fParser);
+      fParser := NIL;
     end;
 
   {$ifdef profile_XmlReader} finally profiler.Finish end; {$endif}
