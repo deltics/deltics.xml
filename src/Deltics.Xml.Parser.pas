@@ -12,7 +12,7 @@ interface
     SysUtils,
   { deltics: }
     Deltics.Strings,
-    Deltics.IO.Streams;
+    Deltics.IO.Text;
 
 
   type

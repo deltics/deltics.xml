@@ -47,7 +47,7 @@ interface
     private
       fOwner: TXsdDeclaration;
       function get_Schema: TXsdSchema;
-      function NameInSchema(const aValue: UTF8String): UTF8String;
+      function NameInSchema(const aValue: Utf8String): Utf8String;
     public
       constructor Create(const aOwner: TXsdDeclaration); reintroduce;
       property Owner: TXsdDeclaration read fOwner;
@@ -59,8 +59,8 @@ interface
     private
       fAttributeFormDefault: TXsdFormDefault;
       fElementFormDefault: TXsdFormDefault;
-      fID: UTF8String;
-      fNamespace: UTF8String;
+      fID: Utf8String;
+      fNamespace: Utf8String;
       fNamespaceDeclarations: TXMLAttributeList;
       fNamespaces: TXMLNamespaceBindings;
       fRootElements: TXsdElementList;
@@ -69,14 +69,14 @@ interface
     public
       constructor Create; reintroduce;
       destructor Destroy; override;
-      procedure AddNamespace(const aPrefix, aName: UTF8String);
+      procedure AddNamespace(const aPrefix, aName: Utf8String);
       procedure Clear;
       procedure LoadFromFile(const aFilename: String);
-      procedure SetTargetNamespace(const aName: UTF8String);
+      procedure SetTargetNamespace(const aName: Utf8String);
       property AttributeFormDefault: TXsdFormDefault read fAttributeFormDefault write fAttributeFormDefault;
       property ElementFormDefault: TXsdFormDefault read fAttributeFormDefault write fAttributeFormDefault;
-      property ID: UTF8String read fID write fID;
-      property Namespace: UTF8String read fNamespace write fNamespace;
+      property ID: Utf8String read fID write fID;
+      property Namespace: Utf8String read fNamespace write fNamespace;
       property Namespaces: TXMLNamespaceBindings read fNamespaces;
       property RootElements: TXsdElementList read fRootElements;
       property TargetNamespace: TXMLNamespace read fTargetNamespace;
@@ -85,13 +85,13 @@ interface
 
     TXsdImport = class(TXsdDeclaration)
     private
-      fSchemaLocation: UTF8String;
-      fID: UTF8String;
-      fNamespace: UTF8String;
+      fSchemaLocation: Utf8String;
+      fID: Utf8String;
+      fNamespace: Utf8String;
     public
-      property SchemaLocation: UTF8String read fSchemaLocation write fSchemaLocation;
-      property ID: UTF8String read fID write fID;
-      property Namespace: UTF8String read fNamespace write fNamespace;
+      property SchemaLocation: Utf8String read fSchemaLocation write fSchemaLocation;
+      property ID: Utf8String read fID write fID;
+      property Namespace: Utf8String read fNamespace write fNamespace;
     end;
 
 
@@ -102,14 +102,14 @@ interface
     TXsdElement = class(TXsdDeclaration)
     private
       fDataType: TXsdDataType;
-      fDataTypeName: UTF8String;
-      fName: UTF8String;
+      fDataTypeName: Utf8String;
+      fName: Utf8String;
       procedure set_DataType(const aValue: TXsdDataType);
-      procedure set_DataTypeName(const aValue: UTF8String);
+      procedure set_DataTypeName(const aValue: Utf8String);
     public
       property DataType: TXsdDataType read fDataType write set_DataType;
-      property DataTypeName: UTF8String read fDataTypeName write set_DataTypeName;
-      property Name: UTF8String read fName write fName;
+      property DataTypeName: Utf8String read fDataTypeName write set_DataTypeName;
+      property Name: Utf8String read fName write fName;
     end;
 
 
@@ -149,7 +149,7 @@ interface
         function get_Item(const aIndex: Integer): TXsdElement; reintroduce;
       public
         procedure Add(const aElement: TXsdElement); reintroduce; overload;
-        function Add(const aName: UTF8String): TXsdElement; overload;
+        function Add(const aName: Utf8String): TXsdElement; overload;
         property Items[const aIndex: Integer]: TXsdElement read get_Item; default;
       end;
 
@@ -190,9 +190,9 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXsdDeclaration.NameInSchema(const aValue: UTF8String): UTF8String;
+  function TXsdDeclaration.NameInSchema(const aValue: Utf8String): Utf8String;
   var
-    parts: TWideStringArray;
+    parts: UnicodeStringArray;
   begin
     case Wide.Split(Wide.FromUtf8(aValue), ':', parts) of
       1 : result := aValue;
@@ -239,7 +239,7 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXsdSchema.AddNamespace(const aPrefix, aName: UTF8String);
+  procedure TXsdSchema.AddNamespace(const aPrefix, aName: Utf8String);
   begin
     fNamespaces.Add('xmlns:' + aPrefix, aName);
   end;
@@ -285,7 +285,7 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXsdSchema.SetTargetNamespace(const aName: UTF8String);
+  procedure TXsdSchema.SetTargetNamespace(const aName: Utf8String);
   begin
     fTargetNamespace := fNamespaceDeclarations.ByValue(aName).AsNamespace;
   end;
@@ -316,7 +316,7 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXsdElement.set_DataTypeName(const aValue: UTF8String);
+  procedure TXsdElement.set_DataTypeName(const aValue: Utf8String);
   var
     dt: TXsdDataType;
   begin
@@ -412,7 +412,7 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXsdElementList.Add(const aName: UTF8String): TXsdElement;
+  function TXsdElementList.Add(const aName: Utf8String): TXsdElement;
   begin
     result := TXsdElement.Create(Owner);
     result.Name     := aName;

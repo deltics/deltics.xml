@@ -117,7 +117,7 @@ implementation
 
     aDocument.Clear;
 
-    fParser := TXmlParaser.Create(aStream, aDocument.Errors, aDocument.Warnings);
+    fParser := TXmlParser.Create(aStream, aDocument.Errors, aDocument.Warnings);
     try
       try
         while NOT fParser.EOF do

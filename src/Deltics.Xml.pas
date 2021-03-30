@@ -12,7 +12,7 @@ interface
     Contnrs,
     Types,
   { deltics: }
-    Deltics.NullableTypes,
+    Deltics.Nullable,
     Deltics.Strings;
 
 
@@ -664,8 +664,7 @@ implementation
   { deltics: }
     Deltics.InterfacedObjects,
     Deltics.IO.Streams,
-    Deltics.Strings.Templates,
-    Deltics.Strings.Utils,
+    Deltics.StringTemplates,
     Deltics.Xml.Reader,
     Deltics.Xml.Selections,
     Deltics.Xml.Writer;
@@ -846,7 +845,7 @@ implementation
     template: TStringTemplate;
     match: TStringList;
     subquery: Utf8String;
-    parts: TStringArray;
+    parts: StringArray;
     elementName: Utf8String;
     attrName: Utf8String;
   begin
@@ -1360,7 +1359,7 @@ implementation
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlNamespaceNode.set_Name(const aValue: Utf8String);
   var
-    parts: TStringArray;
+    parts: StringArray;
   begin
     case STR.Split(STR.FromUtf8(aValue), ':', parts) of
       1 : fLocalName := aValue;
