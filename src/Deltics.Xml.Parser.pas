@@ -107,7 +107,8 @@ implementation
   {$ifdef InlineMethodsSupported}
     Types,
   {$endif}
-    Windows
+    Windows,
+    Deltics.Memory
   {$ifdef profile_xmlParser}
     ,Deltics.Profiler
   {$endif} ;
@@ -203,7 +204,7 @@ implementation
   begin
   {$ifdef UNICODE}
     if Length(s) > 0 then
-      PWord(Integer(s) - 12)^ := Utf8;
+      PWord(IntPointer(s) - 12)^ := Utf8;
   {$endif}
   end;
 
