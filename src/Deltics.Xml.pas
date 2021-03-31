@@ -662,6 +662,7 @@ implementation
   { vcl: }
     SysUtils,
   { deltics: }
+    Deltics.Exceptions,
     Deltics.InterfacedObjects,
     Deltics.IO.Streams,
     Deltics.StringTemplates,

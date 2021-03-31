@@ -8,6 +8,7 @@ interface
 
   uses
     Contnrs,
+    Deltics.StringTypes,
     Deltics.Xml,
     Deltics.Xml.Schema.Consts;
 

@@ -9,6 +9,7 @@ interface
     Classes,
     Types,
     Deltics.InterfacedObjects,
+    Deltics.StringTypes,
     Deltics.XML;
 
   type
@@ -38,7 +39,7 @@ interface
       function get_ElementItem(const aIndex: Integer): TXMLElement;
     public
       constructor Create(const aNodes: TXMLNodeList);
-      function ItemByName(const aName: UTF8String): TXMLElement;
+      function ItemByName(const aName: Utf8String): TXMLElement;
       property Items[const aIndex: Integer]: TXMLElement read get_ElementItem; default;
       function IXMLElementSelection.get_Item = get_ElementItem;
     end;

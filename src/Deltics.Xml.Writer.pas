@@ -5,6 +5,7 @@ interface
 
   uses
     Classes,
+    Deltics.IO.Streams,
     Deltics.Strings,
     Deltics.XML;
 
@@ -64,7 +65,8 @@ implementation
 
     WriteDocument(aDocument);
 
-    fStream.SaveToStream(aStream);
+    fStream.Position := 0;
+    aStream.CopyFrom(fStream, fStream.Size);
   end;
 
 

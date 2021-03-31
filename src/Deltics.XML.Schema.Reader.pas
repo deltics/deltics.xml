@@ -7,6 +7,7 @@
 interface
 
   uses
+    Deltics.StringTypes,
     Deltics.Xml,
     Deltics.Xml.Schema;
 

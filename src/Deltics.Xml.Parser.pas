@@ -197,7 +197,7 @@ implementation
   {$endif}
 
 
-  procedure SetUtf8(var s: RawByteString); inline;
+  procedure SetUtf8(var s: RawByteString); {$ifdef InlineMethods} inline; {$endif}
   const
     Utf8 = 65001; // CodePage for Utf8
   begin
