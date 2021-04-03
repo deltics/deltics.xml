@@ -1,11 +1,16 @@
 
 {$i deltics.xml.inc}
 
-  unit Deltics.Xml.Dtd;
+  unit Deltics.Xml.Utils;
 
 
 interface
 
+
+
 implementation
+
+
+
 
 end.

@@ -11,6 +11,7 @@ interface
     Classes,
     SysUtils,
   { deltics: }
+    Deltics.StringLists,
     Deltics.Strings,
     Deltics.IO.Text;
 
@@ -24,9 +25,6 @@ interface
 
     IXmlReader = interface(IUtf8Reader)
     ['{7B49549F-7C9C-45DA-95F9-6B2C4B7FBEA4}']
-      function get_Errors: TStringList;
-      function get_Warnings: TStringList;
-
       procedure Abort(const aMessage: String; const aExceptionClass: ExceptionClass = NIL);
       procedure Error(const aMessage: String);
       procedure Warning(const aMessage: String);
@@ -39,7 +37,7 @@ interface
       procedure UnmarkLocation;
       function ReadName: Utf8String;
       function ReadNameWithoutValidation: Utf8String;
-      function ReadWideName(const aValidate: Boolean = TRUE): Utf8String; deprecated;
+      function ReadWideName(const aValidate: Boolean = TRUE): Utf8String; // deprecated;
       function ReadAttributeValue: Utf8String;
       function ReadQuotedString: Utf8String;
       function ReadString: Utf8String; overload;
@@ -51,17 +49,12 @@ interface
       function IsNameEndChar(const aChar: WideChar): Boolean;
       function IsValidNameChar(const aChar: WideChar): Boolean;
       function IsValidNameStartChar(const aChar: WideChar): Boolean;
-
-      property Errors: TStringList read get_Errors;
-      property Warnings: TStringList read get_Warnings;
     end;
 
 
     TXmlParser = class(TUtf8Reader, IXmlReader)
     // IXmlReader
     protected
-      function get_Errors: TStringList;
-      function get_Warnings: TStringList;
       procedure Abort(const aMessage: String; const aExceptionClass: ExceptionClass = NIL);
       procedure Error(const aMessage: String);
       procedure Warning(const aMessage: String);
@@ -74,7 +67,7 @@ interface
       procedure UnmarkLocation;
       function ReadName: Utf8String;
       function ReadNameWithoutValidation: Utf8String;
-      function ReadWideName(const aValidate: Boolean = TRUE): Utf8String; deprecated;
+      function ReadWideName(const aValidate: Boolean = TRUE): Utf8String; // deprecated;
       function ReadAttributeValue: Utf8String;
       function ReadQuotedString: Utf8String;
       function ReadString: Utf8String; overload;
@@ -89,15 +82,13 @@ interface
 
     private
       fMarkedLocations: TList;
-      fErrors: TStringList;
-      fWarnings: TStringList;
+      fErrors: IStringList;
+      fWarnings: IStringList;
       function ReplacePosTokens(const aMessage: String): String;
     public
-      constructor Create(const aStream: TStream; const aErrors: TStringList; const aWarnings: TStringList);
+      constructor Create(const aStream: TStream; const aErrors: IStringList; const aWarnings: IStringList);
+      destructor Destroy; override;
       procedure AfterConstruction; override;
-    public
-      property Errors: TStringList read fErrors write fErrors;
-      property Warnings: TStringList read fWarnings write fWarnings;
     end;
 
 
@@ -241,20 +232,29 @@ implementation
       AddBOMSignature(BOM[i]);
 *)
     inherited;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  constructor TXmlParser.Create(const aStream: TStream;
+                                const aErrors: IStringList;
+                                const aWarnings: IStringList);
+  begin
+    inherited Create(aStream);
+
+    fErrors   := aErrors;
+    fWarnings := aWarnings;
 
     fMarkedLocations := TList.Create;
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  constructor TXmlParser.Create(const aStream: TStream;
-                                const aErrors: TStringList;
-                                const aWarnings: TStringList);
+  destructor TXmlParser.Destroy;
   begin
-    inherited Create(aStream);
+    fMarkedLocations.Free;
 
-    fErrors   := aErrors;
-    fWarnings := aWarnings;
+    inherited;
   end;
 
 
@@ -303,7 +303,8 @@ implementation
   begin
     msg := ReplacePosTokens(aMessage);
 
-    fErrors.Add(msg);
+    if Assigned(fErrors) then
+      fErrors.Add(msg);
 
     if Assigned(aExceptionClass) then
       raise aExceptionClass.Create(msg)
@@ -315,14 +316,16 @@ implementation
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlParser.Error(const aMessage: String);
   begin
-    fErrors.Add(ReplacePosTokens(aMessage));
+    if Assigned(fErrors) then
+      fErrors.Add(ReplacePosTokens(aMessage));
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlParser.Warning(const aMessage: String);
   begin
-    fWarnings.Add(ReplacePosTokens(aMessage));
+    if Assigned(fWarnings) then
+      fWarnings.Add(ReplacePosTokens(aMessage));
   end;
 
 
@@ -476,20 +479,6 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlParser.get_Errors: TStringList;
-  begin
-    result := fErrors;
-  end;
-
-
-  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlParser.get_Warnings: TStringList;
-  begin
-    result := fWarnings;
-  end;
-
-
-  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlParser.UnexpectedChar(const aChar: Utf8Char;
                                       const aMessage: String);
   var
@@ -596,7 +585,7 @@ implementation
     SetLength(s, 256);
 
     s[l] := c;
-    while NOT EOF do
+    while TRUE do
     begin
       c := NextChar;
       if Is_NAMEEND[c] then
@@ -607,17 +596,15 @@ implementation
         SetLength(s, Length(s) + 256);
 
       s[l] := c;
+
+      if EOF then
+        UnexpectedEOF;
     end;
     SetLength(s, l);
     SetUtf8(s);
 
-    if NOT EOF then
-    begin
-      result := s;
-      MoveBack;
-    end
-    else
-      UnexpectedEOF
+    result := s;
+    MoveBack;
 
   {$ifdef profile_xmlParser} finally profiler.Finish end; {$endif}
   end;

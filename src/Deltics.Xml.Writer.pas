@@ -6,101 +6,250 @@ interface
   uses
     Classes,
     Deltics.IO.Streams,
+    Deltics.StringEncodings,
     Deltics.Strings,
-    Deltics.XML;
+    Deltics.StringTypes,
+    Deltics.Xml.Interfaces,
+    Deltics.Xml.Types;
 
 
   type
-    TXMLWriter = class
+    TXmlWriter = class
     private
+      fDocumentProlog: Boolean;
+      fEncoding: TEncoding;
       fIndent: Integer;
-      fStream: TStringStream;
+      fIncludeComments: Boolean;
+      fLineEndings: TXmlFormatterLineEndings;
+      fReadable: Boolean;
+
+      fFirstLine: Boolean;
+      fIndentString: Utf8String;
+      fStream: TStream;
+    private
+      procedure DecIndent;
+      procedure IncIndent;
     protected
-      procedure Write(aString: String);
-//      function ReadCDATA: TXMLCDATA;
-//      function ReadComment: TXMLComment;
-//      function ReadDocType: TXMLDocType;
-      procedure WriteDocument(const aDocument: TXMLDocument);
-      procedure WriteElement(const aElement: TXMLElement);
-//      function ReadInternalDTD: TXMLDocType;
-      procedure WriteNode(const aNode: TXMLNode);
-      procedure WriteNodes(const aNodeList: TXMLNodeList);
-      procedure WriteProcessingInstruction(const aProcessingInstruction: TXMLProcessingInstruction);
-//      function ReadText: TXMLText;
-//      function ReadDTDAttList: TXMLDTDAttListDeclaration;
-//      function ReadDTDContentParticles: TXMLDTDContentParticleList;
-//      function ReadDTDDeclaration: TXMLDTDDeclaration;
-//      function ReadDTDElement: TXMLDTDElementDeclaration;
-//      function ReadDTDEntity: TXMLDTDEntityDeclaration;
-//      function ReadDTDNotation: TXMLDTDNotationDeclaration;
-//      procedure UnexpectedNode(const aNode: TXMLNode);
+      procedure Write(aString: Utf8String);
+      procedure WriteIndent;
+      procedure WriteLine(aString: Utf8String);
+//      function ReadCDATA: IXmlCDATA;
+//      function ReadComment: IXmlComment;
+//      function ReadDocType: IXmlDocType;
+      procedure WriteDocument(const aDocument: IXmlDocument);
+      procedure WriteElement(const aElement: IXmlElement);
+//      function ReadInternalDtd: IXmlDocType;
+      procedure WriteNode(const aNode: IXmlNode);
+      procedure WriteNodes(const aNodeList: IXmlNodeList);
+      procedure WriteProcessingInstruction(const aProcessingInstruction: IXmlProcessingInstruction);
+      procedure WriteProlog(const aStandalone: NullableBooleanProp);
+//      function ReadText: IXmlText;
+//      function ReadDtdAttList: IXmlDtdAttListDeclaration;
+//      function ReadDtdContentParticles: IXmlDtdContentParticleList;
+//      function ReadDtdDeclaration: IXmlDtdDeclaration;
+//      function ReadDtdElement: IXmlDtdElementDeclaration;
+//      function ReadDtdEntity: IXmlDtdEntityDeclaration;
+//      function ReadDtdNotation: IXmlDtdNotationDeclaration;
+//      procedure UnexpectedNode(const aNode: IXmlNode);
     public
-      function Indent: String;
-      procedure SaveDocument(const aDocument: TXMLDocument; const aStream: TStream);
-      procedure SaveFragment(const aFragment: TXMLFragment; const aStream: TStream);
+      constructor Create;
+      property DocumentProlog: Boolean read fDocumentProlog write fDocumentProlog;
+      property Encoding: TEncoding read fEncoding write fEncoding;
+      property LineEndings: TXmlFormatterLineEndings read fLineEndings write fLineEndings;
+      property IncludeComments: Boolean read fIncludeComments write fIncludeComments;
+      property Readable: Boolean read fReadable write fReadable;
+      property ReadableIndent: Integer read fIndent write fIndent;
+
+      procedure SaveDocument(const aDocument: IXmlDocument; const aStream: TStream);
+      procedure SaveFragment(const aFragment: IXmlFragment; const aStream: TStream);
     end;
 
 
+  function Concat(aStrings: array of Utf8String): Utf8String;
 
 
 implementation
 
+//  uses
+//    SysUtils;
   uses
-    SysUtils;
+    Deltics.Exceptions,
+    Deltics.Memory,
+    Deltics.ReverseBytes,
+    Deltics.Unicode;
 
-{ TXMLWriter }
 
-  function TXMLWriter.Indent: String;
+  function Concat(aStrings: array of Utf8String): Utf8String;
+  var
+    i: Integer;
+    len: Integer;
+    pos: array of Integer;
   begin
-    result := STR.StringOf(' ', fIndent * 4);
+    len := 0;
+    SetLength(pos, Length(aStrings));
+    for i := 0 to High(aStrings) do
+    begin
+      pos[i] := len + 1;
+      Inc(len, Length(aStrings[i]));
+    end;
+
+    SetLength(result, len);
+    for i := 0 to High(aStrings) do
+      Memory.Copy(Pointer(aStrings[i]), Length(aStrings[i]), @result[pos[i]]);
   end;
 
 
 
-  procedure TXMLWriter.SaveDocument(const aDocument: TXMLDocument; const aStream: TStream);
-  begin
-    fStream := TStringStream.Create;
 
-    // TODO: UTF8 Encoding / Encoding options
+
+
+{ TXmlWriter }
+
+  constructor TXmlWriter.Create;
+  begin
+    inherited;
+
+    fEncoding     := TEncoding.Utf8;
+    fIndent       := 2;
+    fIndentString := '';
+    fLineEndings  := xmlLF;
+    fReadable     := TRUE;
+  end;
+
+
+  procedure TXmlWriter.WriteIndent;
+  begin
+    Write(fIndentString);
+  end;
+
+
+  procedure TXmlWriter.DecIndent;
+  begin
+    if fIndent = 0 then
+      EXIT;
+
+    if Length(fIndentString) > 0 then
+      SetLength(fIndentString, Length(fIndentString) - fIndent)
+    else
+      raise Exception.Create('Ooops');
+  end;
+
+
+  procedure TXmlWriter.IncIndent;
+  var
+    i: Integer;
+  begin
+    if fIndent = 0 then
+      EXIT;
+
+    i := Length(fIndentString);
+    SetLength(fIndentString, i + fIndent);
+
+    for i := i + 1 to Length(fIndentString) do
+      fIndentString[i] := ' ';
+  end;
+
+
+  procedure TXmlWriter.SaveDocument(const aDocument: IXmlDocument; const aStream: TStream);
+  begin
+    fFirstLine  := TRUE;
+    fStream     := aStream;
+
+    if DocumentProlog then
+      WriteProlog(aDocument.Standalone);
 
     WriteDocument(aDocument);
-
-    fStream.Position := 0;
-    aStream.CopyFrom(fStream, fStream.Size);
   end;
 
 
 
-  procedure TXMLWriter.SaveFragment(const aFragment: TXMLFragment; const aStream: TStream);
+  procedure TXmlWriter.SaveFragment(const aFragment: IXmlFragment; const aStream: TStream);
   begin
 
   end;
 
 
+  procedure TXmlWriter.Write(aString: Utf8String);
+  var
+    s: UnicodeString;
+    bytes: PWideChar;
+  begin
+    if Length(aString) = 0 then
+      EXIT;
+
+    case fEncoding.Codepage of
+      cpUtf8    : fStream.Write(aString[1], Length(aString));
+
+      cpUtf16Le : begin
+                    s := Unicode.Utf8ToUtf16(aString);
+                    fStream.Write(s[1], Length(s) * 2);
+                  end;
+
+      cpUtf16   : begin
+                    s := Unicode.Utf8ToUtf16(aString);
+
+                    GetMem(bytes, Length(s) * 2);
+                    try
+                      ReverseBytes(PWord(bytes), Length(s));
+                      fStream.Write(bytes^, Length(s) * 2);
+
+                    finally
+                      FreeMem(bytes);
+                    end;
+                  end;
+    else
+      raise Exception.Create('Encoding is not supported');
+    end;
+  end;
 
 
-  procedure TXMLWriter.Write(aString: String);
+  procedure TXmlWriter.WriteLine(aString: Utf8String);
   const
-    CRLF = ANSIChar(#13) + ANSIChar(#10);
+    UTF8_ENDING     : Utf8String = #13#10;
+    UTF16LE_ENDING  : UnicodeString = #$000d#$000a;
+    UTF16_ENDING    : UnicodeString = #$0d00#$0a00;
   begin
-    fStream.WriteString(Indent);
-    fStream.WriteString(aString);
-    fStream.WriteString(CRLF);
+    if Readable then
+    begin
+      if NOT fFirstLine then
+        case fEncoding.CodePage of
+          cpUtf8  : case fLineEndings of
+                      xmlLF   : fStream.Write(UTF8_ENDING[2], 1);
+                      xmlCRLF : fStream.Write(UTF8_ENDING[1], 2);
+                    end;
+
+          cpUtf16  : case fLineEndings of
+                      xmlLF   : fStream.Write(UTF16_ENDING[2], 2);
+                      xmlCRLF : fStream.Write(UTF16_ENDING[1], 4);
+                    end;
+
+          cpUtf16LE  : case fLineEndings of
+                      xmlLF   : fStream.Write(UTF16LE_ENDING[2], 2);
+                      xmlCRLF : fStream.Write(UTF16LE_ENDING[1], 4);
+                    end;
+        end;
+
+      fFirstLine := FALSE;
+
+      WriteIndent;
+    end;
+
+    Write(aString);
   end;
 
 
-  procedure TXMLWriter.WriteDocument(const aDocument: TXMLDocument);
+  procedure TXmlWriter.WriteDocument(const aDocument: IXmlDocument);
   begin
     WriteNode(aDocument);
   end;
 
 
-
-  procedure TXMLWriter.WriteElement(const aElement: TXMLElement);
+  procedure TXmlWriter.WriteElement(const aElement: IXmlElement);
   var
     i: Integer;
-    attr: TXMLAttribute;
-    attrs: String;
+    attr: IXmlAttribute;
+    attrs: Utf8String;
+    s: Utf8String;
   begin
     if (aElement.Attributes.Count > 0) then
     begin
@@ -108,57 +257,59 @@ implementation
 
       for i := 0 to Pred(aElement.Attributes.Count) do
       begin
-        attr := aElement.Attributes[i];
-        attrs := attrs + STR.FromUTF8(attr.Name) + '="' + STR.FromUTF8(attr.Value) + '" ';
+        attr  := aElement.Attributes[i];
+        attrs := Concat([attrs, attr.Name, '="', attr.Value, '" ']);
       end;
 
       SetLength(attrs, Length(attrs) - 1);
     end;
 
-    if (aElement.Nodes.Count = 0)
+    if (aElement.IsEmpty)
      or ((aElement.Nodes.Count = 1) and (aElement.Nodes[0].NodeType = xmlText)) then
     begin
-      if (aElement.Value = '') and (attrs = '') then
-        Write(Format('<%s/>', [aElement.Name]))
-      else if (aElement.Value <> '') and (attrs = '') then
-        Write(Format('<%s>%s</%s>', [aElement.Name, aElement.Value, aElement.Name]))
-      else if (aElement.Value <> '') and (attrs <> '') then
-        Write(Format('<%s %s>%s</%s>', [aElement.Name, attrs, aElement.Value, aElement.Name]))
-      else if (aElement.Value = '') and (attrs <> '') then
-        Write(Format('<%s %s/>', [aElement.Name, attrs]));
+      case Length(attrs) of
+        0 : if aElement.IsEmpty and (attrs = '') then
+              s := Concat(['<', aElement.Name, '/>'])
+            else
+              s := Concat(['<', aElement.Name, '>', aElement.Text, '</', aElement.Name, '>']);
+      else
+        if aElement.IsEmpty then
+          s := Concat(['<', aElement.Name, ' ', attrs, '>', aElement.Text, '</', aElement.Name, '>'])
+        else
+          s := Concat(['<', aElement.Name, ' ', attrs, '/>']);
+      end;
+
+      WriteLine(s);
 
       EXIT;
     end;
 
     if (attrs = '') then
-      Write(Format('<%s>', [aElement.Name]))
+      WriteLine(Concat(['<', aElement.Name, '>']))
     else
-      Write(Format('<%s %s>', [aElement.Name, attrs]));
+      WriteLine(Concat(['<', aElement.Name, ' ', attrs, '>']));
 
-    Inc(fIndent);
+    IncIndent;
     WriteNodes(aElement.Nodes);
-    Dec(fIndent);
+    DecIndent;
 
-    Write(Format('</%s>', [aElement.Name]));
+    WriteLine(Concat(['</', aElement.Name, '>']));
   end;
 
 
 
-  procedure TXMLWriter.WriteNode(const aNode: TXMLNode);
-  var
-    element: TXMLElement absolute aNode;
-    processingInstruction: TXMLProcessingInstruction absolute aNode;
+  procedure TXmlWriter.WriteNode(const aNode: IXmlNode);
   begin
     case aNode.NodeType of
-      xmlDocument               : WriteNodes((aNode as TXMLDocument).Nodes);
-      xmlElement                : WriteElement(element);
-      xmlProcessingInstruction  : WriteProcessingInstruction(processingInstruction);
+      xmlDocument               : WriteNodes((aNode as IXmlDocument).Nodes);
+      xmlElement                : WriteElement(aNode as IXmlElement);
+      xmlProcessingInstruction  : WriteProcessingInstruction(aNode as IXmlProcessingInstruction);
     end;
   end;
 
 
 
-  procedure TXMLWriter.WriteNodes(const aNodeList: TXMLNodeList);
+  procedure TXmlWriter.WriteNodes(const aNodeList: IXmlNodeList);
   var
     i: Integer;
   begin
@@ -168,11 +319,36 @@ implementation
 
 
 
-  procedure TXMLWriter.WriteProcessingInstruction(const aProcessingInstruction: TXMLProcessingInstruction);
+  procedure TXmlWriter.WriteProcessingInstruction(const aProcessingInstruction: IXmlProcessingInstruction);
   begin
-    Write(Format('<?%s %s?>', [aProcessingInstruction.Name, aProcessingInstruction.Target]));
+    WriteLine(Concat(['<?', aProcessingInstruction.Name, ' ', aProcessingInstruction.Target, '?>']));
   end;
 
+
+
+  procedure TXmlWriter.WriteProlog(const aStandalone: NullableBooleanProp);
+  var
+    encoding: Utf8String;
+    standalone: Utf8String;
+  begin
+    case fEncoding.Codepage of
+      cpUtf8    : encoding := 'UTF-8';
+      cpUtf16   : encoding := 'UTF-16';
+      cpUtf16LE : encoding := 'UTF-16LE';
+    end;
+
+    if NOT aStandalone.IsNull then
+    begin
+      if aStandalone.Value then
+        standalone := 'yes'
+      else
+        standalone := 'no';
+
+      WriteLine(Concat(['<?xml version="1.0" encoding="', encoding, '" standalone="', standalone, '"?>']))
+    end
+    else
+      WriteLine(Concat(['<?xml version="1.0" encoding="', encoding, '"?>']))
+  end;
 
 
 
