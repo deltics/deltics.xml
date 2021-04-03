@@ -22,6 +22,7 @@ interface
 implementation
 
   uses
+    Deltics.StringTypes,
     Deltics.Xml,
     Deltics.Xml.Writer;
 
