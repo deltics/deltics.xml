@@ -202,6 +202,8 @@ implementation
         end;
       end;
 
+      doc.SourceEncoding := reader.fParser.SourceEncoding;
+
     finally
       reader.Free;
     end;
