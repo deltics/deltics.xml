@@ -8,6 +8,7 @@ interface
 
   uses
     Classes,
+    Deltics.StringEncodings,
     Deltics.StringTypes,
     Deltics.Xml.Interfaces,
     Deltics.Xml.Nodes;
@@ -20,12 +21,14 @@ interface
 
     protected // IXmlFragment + IXmlHasNodes
       function get_Nodes: IXmlNodeList;
+      function get_SourceEncoding: TEncoding;
     public
       procedure Add(const aNode: IXmlNode);
       procedure Clear;
 
     private
       fNodes: IXmlNodeList;
+      fSourceEncoding: TEncoding;
     protected
       procedure Assign(const aSource: TXmlNode); override;
       function Accepts(const aNode: TXmlNode): Boolean; override;
@@ -36,6 +39,7 @@ interface
 //      function SelectNode(const aQuery: Utf8String): TXmlNode;
 //      function SelectNodes(const aQuery: Utf8String): IXmlNodeSelection;
       property Nodes: IXmlNodeList read fNodes;
+      property SourceEncoding: TEncoding read fSourceEncoding write fSourceEncoding;
     end;
 
 
@@ -67,6 +71,13 @@ implementation
   function TXmlFragment.get_Nodes: IXmlNodeList;
   begin
     result := fNodes;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlFragment.get_SourceEncoding: TEncoding;
+  begin
+    result := fSourceEncoding;
   end;
 
 

@@ -8,6 +8,7 @@ interface
 
   uses
     Classes,
+    Deltics.IO.Streams,
     Deltics.Nullable,
     Deltics.StringEncodings,
     Deltics.StringLists,
@@ -120,18 +121,21 @@ interface
       function get_Nodes: IXmlNodeList;
       function get_Prolog: IXmlProlog;
       function get_RootElement: IXmlElement;
+      function get_SourceEncoding: TEncoding;
       function get_Standalone: Utf8String;
       procedure set_DocType(const aValue: IXmlDocType);
       procedure set_RootElement(const aValue: IXmlElement);
       procedure set_Standalone(const aValue: Utf8String);
 
-      procedure SaveToFile(const aFilename: String; const aEncoding: TEncoding);
-      procedure SaveToStream(const aStream: TStream; const aEncoding: TEncoding);
+      procedure SaveToFile(const aFilename: String; const aEncoding: TEncoding = NIL);
+      procedure SaveToStream(const aStream: IStream; const aEncoding: TEncoding = NIL); overload;
+      procedure SaveToStream(const aStream: TStream; const aEncoding: TEncoding = NIL); overload;
 
       property DocType: IXmlDocType read get_DocType write set_DocType;
       property Nodes: IXmlNodeList read get_Nodes;
       property Prolog: IXmlProlog read get_Prolog;
       property RootElement: IXmlElement read get_RootElement write set_RootElement;
+      property SourceEncoding: TEncoding read get_SourceEncoding;
       property Standalone: Utf8String read get_Standalone write set_Standalone;
     end;
 
@@ -186,11 +190,13 @@ interface
     IXmlFragment = interface(IXmlNode)
     ['{20D343CC-F8B7-431F-A471-B8CAEE3005CF}']
       function get_Nodes: IXmlNodeList;
+      function get_SourceEncoding: TEncoding;
 
       procedure Add(const aNode: IXmlNode);
       procedure Clear;
 
       property Nodes: IXmlNodeList read get_Nodes;
+      property SourceEncoding: TEncoding read get_SourceEncoding;
     end;
 
 
@@ -251,6 +257,9 @@ interface
       procedure set_Text(const aValue: Utf8String);
 
       function Add(const aNode: IXmlNode): Integer;
+      function AddAttribute(const aName: Utf8String; const aValue: Utf8String): IXmlAttribute;
+      function AddElement(const aName: Utf8String): IXmlElement; overload;
+      function AddElement(const aName: Utf8String; const aText: Utf8String): IXmlElement; overload;
       function Clone: IXmlElement; overload;
       function ContainsElement(const aName: Utf8String; var aElement: IXmlElement): Boolean;
       function FindNamespace(const aPrefix: Utf8String): IXmlNamespace;
@@ -410,9 +419,10 @@ interface
     IXmlLoader = interface
     ['{CC6A5B1F-9C7D-46B4-A7BE-8E2728272DD5}']
       procedure FromFile(const aFilename: String);
-      procedure FromStream(const aStream: TStream);
-      procedure FromString(const aString: String);
-      procedure FromUnicode(const aString: UnicodeString);
+      procedure FromStream(const aStream: IStream); overload;
+      procedure FromStream(const aStream: TStream); overload;
+      procedure FromString(const aString: AnsiString); overload;
+      procedure FromString(const aString: UnicodeString); overload;
       procedure FromUtf8(const aString: Utf8String);
       function Yielding: IXmlLoaderYields;
     end;
@@ -432,6 +442,8 @@ interface
     ['{864B88D3-DA39-4E1A-9070-6DE62E66AF37}']
       function AsUnicodeString: UnicodeString;
       function AsUtf8String: Utf8String;
+      procedure IntoStream(const aStream: IStream; const aEncoding: TEncoding = NIL); overload;
+      procedure IntoStream(const aStream: TStream; const aEncoding: TEncoding = NIL); overload;
       function LineEndings(const aValue: TXmlLineEndings): IXmlFormatter;
       function Prolog(const aValue: Boolean): IXmlFormatter;
       function Readable(const aValue: Boolean): IXmlFormatter;

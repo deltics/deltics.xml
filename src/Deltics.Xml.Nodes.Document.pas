@@ -26,13 +26,15 @@ interface
       function get_Nodes: IXmlNodeList;
       function get_Prolog: IXmlProlog;
       function get_RootElement: IXmlElement;
+      function get_SourceEncoding: TEncoding;
       function get_Standalone: Utf8String;
       procedure set_DocType(const aValue: IXmlDocType);
       procedure set_RootElement(const aValue: IXmlElement);
       procedure set_Standalone(const aValue: Utf8String);
 //      procedure Add(const aNode: IXmlNode);
-      procedure SaveToFile(const aFilename: String; const aEncoding: TEncoding);
-      procedure SaveToStream(const aStream: TStream; const aEncoding: TEncoding);
+      procedure SaveToFile(const aFilename: String; const aEncoding: TEncoding = NIL);
+      procedure SaveToStream(const aStream: IStream; const aEncoding: TEncoding = NIL); overload;
+      procedure SaveToStream(const aStream: TStream; const aEncoding: TEncoding = NIL); overload;
 
     private
       fDocType: IXmlDocType;
@@ -40,6 +42,8 @@ interface
       fProlog: IXmlProlog;
       fRootElement: IXmlElement;
       fStandalone: Utf8String;
+
+      fSourceEncoding: TEncoding;
     protected
       function Accepts(const aNode: TXmlNode): Boolean; override;
       procedure Assign(const aSource: TXmlNode); overload; override;
@@ -58,6 +62,7 @@ interface
       property Nodes: IXmlNodeList read fNodes;
       property Prolog: IXmlProlog read fProlog;
       property RootElement: IXmlElement read fRootElement write set_RootElement;
+      property SourceEncoding: TEncoding read fSourceEncoding write fSourceEncoding;
     end;
 
 
@@ -192,6 +197,13 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlDocument.get_SourceEncoding: TEncoding;
+  begin
+    result := fSourceEncoding;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlDocument.get_Standalone: Utf8String;
   begin
     result := fStandalone;
@@ -221,7 +233,8 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXmlDocument.SaveToFile(const aFilename: String; const aEncoding: TEncoding);
+  procedure TXmlDocument.SaveToFile(const aFilename: String;
+                                    const aEncoding: TEncoding);
   var
     stream: TFileStream;
   begin
@@ -236,7 +249,16 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXmlDocument.SaveToStream(const aStream: TStream; const aEncoding: TEncoding);
+  procedure TXmlDocument.SaveToStream(const aStream: IStream;
+                                      const aEncoding: TEncoding);
+  begin
+    SaveToStream(aStream.Stream, aEncoding);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  procedure TXmlDocument.SaveToStream(const aStream: TStream;
+                                      const aEncoding: TEncoding);
   var
     writer: TXmlWriter;
   begin
@@ -246,6 +268,9 @@ implementation
       writer.Encoding       := aEncoding;
       writer.Readable       := TRUE;
       writer.ReadableIndent := 2;
+
+      if NOT Assigned(writer.Encoding) then
+        writer.Encoding := SourceEncoding;
 
       writer.SaveDocument(self, aStream);
 

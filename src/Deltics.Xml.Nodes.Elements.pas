@@ -26,6 +26,9 @@ interface
       procedure set_Text(const aValue: Utf8String);
     public
       function Add(const aNode: IXmlNode): Integer;
+      function AddAttribute(const aName: Utf8String; const aValue: Utf8String): IXmlAttribute;
+      function AddElement(const aName: Utf8String): IXmlElement; overload;
+      function AddElement(const aName: Utf8String; const aText: Utf8String): IXmlElement; overload;
       function Clone: IXmlElement; overload;
       function ContainsElement(const aName: Utf8String; var aElement: IXmlElement): Boolean;
       function FindNamespace(const aPrefix: Utf8String): IXmlNamespace;
@@ -347,6 +350,30 @@ implementation
     InterfaceCast(dest, TXmlNodeList, nodes);
 
     result := nodes.Add(aNode);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlElement.AddAttribute(const aName, aValue: Utf8String): IXmlAttribute;
+  begin
+    result := TXmlAttribute.Create(aName, aValue);
+    Add(result);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlElement.AddElement(const aName: Utf8String): IXmlElement;
+  begin
+    result := TXmlElement.Create(aName);
+    Add(result);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlElement.AddElement(const aName, aText: Utf8String): IXmlElement;
+  begin
+    result := TXmlElement.Create(aName, aText);
+    Add(result);
   end;
 
 
