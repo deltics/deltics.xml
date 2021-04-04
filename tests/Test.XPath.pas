@@ -34,7 +34,7 @@ implementation
 
   procedure XPath.SetupTest;
   begin
-    Xml.Load(doc).FromFile('X:\dev\src\delphi\libs\congress\deltics.xml\tests\samples\menu.xml');
+    Xml.Load(doc).FromFile('%PROJECTDIR%\samples\menu.xml');
   end;
 
 

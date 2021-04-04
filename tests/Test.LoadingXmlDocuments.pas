@@ -35,7 +35,7 @@ implementation
     note: IXmlElement;
   begin
     // TODO: Support enfironment variables in filepath
-    Xml.Load(sut).FromFile('X:\dev\src\delphi\libs\congress\deltics.xml\tests\samples\note.xml');
+    Xml.Load(sut).FromFile('%PROJECTDIR%\samples\note.xml');
 
     Test('Document').Assert(sut).IsAssigned;
     Test('Document.DocType').Assert(sut.DocType).IsNIL;
