@@ -34,7 +34,6 @@
         "src\\deltics.xml.inc",
         "src\\Deltics.Xml.pas",
         "src\\Deltics.Xml.Exceptions.pas",
-        "src\\Deltics.Xml.Factories.pas",
         "src\\Deltics.Xml.Formatter.pas",
         "src\\Deltics.Xml.Fpi.pas",
         "src\\Deltics.Xml.Interfaces.pas",
