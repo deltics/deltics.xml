@@ -73,7 +73,7 @@ interface
                                  );
 
 
-    TXmlFormatterLineEndings = (xmlLF, xmlCRLF);
+    TXmlLineEndings = (xmlLF, xmlCRLF);
 
 
 

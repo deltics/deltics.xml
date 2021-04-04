@@ -25,7 +25,7 @@ interface
     protected // IXmlFormatter
       function AsUnicodeString: UnicodeString;
       function AsUtf8String: Utf8String;
-      function LineEndings(const aValue: TXmlFormatterLineEndings): IXmlFormatter;
+      function LineEndings(const aValue: TXmlLineEndings): IXmlFormatter;
       function Prolog(const aValue: Boolean): IXmlFormatter;
       function Readable(const aValue: Boolean): IXmlFormatter;
       function Yielding: IXmlFormatterYields;
@@ -35,7 +35,7 @@ interface
       function Warnings(var aList: IStringList): IXmlFormatter;
 
     private
-      fLineEndings: TXmlFormatterLineEndings;
+      fLineEndings: TXmlLineEndings;
       fProlog: Boolean;
       fIndent: Integer;
       fRootNode: IXmlNode;
@@ -125,7 +125,7 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlFormatter.LineEndings(const aValue: TXmlFormatterLineEndings): IXmlFormatter;
+  function TXmlFormatter.LineEndings(const aValue: TXmlLineEndings): IXmlFormatter;
   begin
     fLineEndings  := aValue;
     result        := self;

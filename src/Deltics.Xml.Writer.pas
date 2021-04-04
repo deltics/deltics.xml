@@ -20,7 +20,7 @@ interface
       fEncoding: TEncoding;
       fIndent: Integer;
       fIncludeComments: Boolean;
-      fLineEndings: TXmlFormatterLineEndings;
+      fLineEndings: TXmlLineEndings;
       fReadable: Boolean;
 
       fFirstLine: Boolean;
@@ -55,7 +55,7 @@ interface
       constructor Create;
       property DocumentProlog: Boolean read fDocumentProlog write fDocumentProlog;
       property Encoding: TEncoding read fEncoding write fEncoding;
-      property LineEndings: TXmlFormatterLineEndings read fLineEndings write fLineEndings;
+      property LineEndings: TXmlLineEndings read fLineEndings write fLineEndings;
       property IncludeComments: Boolean read fIncludeComments write fIncludeComments;
       property Readable: Boolean read fReadable write fReadable;
       property ReadableIndent: Integer read fIndent write fIndent;
