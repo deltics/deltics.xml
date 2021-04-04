@@ -43,11 +43,13 @@ uses
   Test.BuildingXmlDocuments in 'Test.BuildingXmlDocuments.pas',
   Test.LoadingXmlDocuments in 'Test.LoadingXmlDocuments.pas',
   Test.FormattingXml in 'Test.FormattingXml.pas',
-  Test.XPath in 'Test.XPath.pas';
+  Test.XPath in 'Test.XPath.pas',
+  Test.DocumentEncoding in 'Test.DocumentEncoding.pas';
 
 begin
   TestRun.Test(BuildingXmlDocuments);
   TestRun.Test(LoadingXmlDocuments);
   TestRun.Test(FormattingXml);
+  TestRun.Test(DocumentEncoding);
   TestRun.Test(XPath);
 end.
