@@ -24,6 +24,7 @@ implementation
   uses
     Deltics.StringTypes,
     Deltics.Xml,
+    Deltics.Xml.Utils,
     Deltics.Xml.Writer;
 
 
