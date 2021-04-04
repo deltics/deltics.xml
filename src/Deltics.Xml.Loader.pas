@@ -24,9 +24,10 @@ interface
     TXmlLoader = class(TComInterfacedObject, IXmlLoader, IXmlLoaderYields)
     protected // IXmlLoader
       procedure FromFile(const aFilename: String);
-      procedure FromStream(const aStream: TStream);
-      procedure FromString(const aString: String);
-      procedure FromUnicode(const aString: UnicodeString);
+      procedure FromStream(const aStream: IStream); overload;
+      procedure FromStream(const aStream: TStream); overload;
+      procedure FromString(const aString: AnsiString); overload;
+      procedure FromString(const aString: UnicodeString); overload;
       procedure FromUtf8(const aString: Utf8String);
       function Yielding: IXmlLoaderYields;
 
@@ -73,6 +74,12 @@ implementation
   procedure TXmlLoader.FromFile(const aFilename: String);
   begin
     FromStreamDisposing(TFileStream.Create(aFilename, fmOpenRead or fmShareDenyWrite));
+  end;
+
+
+  procedure TXmlLoader.FromStream(const aStream: IStream);
+  begin
+    FromStream(aStream.Stream);
   end;
 
 
@@ -129,19 +136,15 @@ implementation
   end;
 
 
-  procedure TXmlLoader.FromString(const aString: String);
+  procedure TXmlLoader.FromString(const aString: AnsiString);
   begin
-    FromStreamDisposing(TFixedMemoryStream.Create(Pointer(aString), Length(aString) * SizeOf(Char)));
+    FromStreamDisposing(TFixedMemoryStream.Create(Pointer(aString), Length(aString)));
   end;
 
 
-  procedure TXmlLoader.FromUnicode(const aString: UnicodeString);
+  procedure TXmlLoader.FromString(const aString: UnicodeString);
   begin
-  {$ifdef UNICODE}
-    FromStreamDisposing(TStringStream.Create(aString));
-  {$else}
     FromStreamDisposing(TFixedMemoryStream.Create(Pointer(aString), Length(aString) * 2));
-  {$endif}
   end;
 
 
