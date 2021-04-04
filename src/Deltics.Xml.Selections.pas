@@ -24,8 +24,8 @@ interface
 
     protected // IXmlNodeSelection
       function get_Count: Integer;
-      function get_First: IXmlNode;
-      function get_Last: IXmlNode;
+      function get_First: IXmlNode; overload;
+      function get_Last: IXmlNode; overload;
       function get_Item(const aIndex: Integer): IXmlNode;
     public
       property Count: Integer read get_Count;
@@ -35,8 +35,8 @@ interface
 
     TXmlElementSelection = class(TXmlNodeSelection, IXmlElementSelection)
     protected
-      function get_First: IXmlElement;
-      function get_Last: IXmlElement;
+      function get_First: IXmlElement; overload;
+      function get_Last: IXmlElement; overload;
       function get_Item(const aIndex: Integer): IXmlElement; overload;
     public
       constructor Create(const aElement: IXmlElement); overload;
@@ -48,8 +48,8 @@ interface
 
     TXmlNamespaceSelection = class(TXmlNodeSelection, IXmlNamespaceSelection)
     protected
-      function get_First: IXmlNamespace;
-      function get_Last: IXmlNamespace;
+      function get_First: IXmlNamespace; overload;
+      function get_Last: IXmlNamespace; overload;
       function get_Item(const aIndex: Integer): IXmlNamespace; overload;
     public
       constructor Create(const aNodes: IXmlNodeList);
