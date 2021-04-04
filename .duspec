@@ -61,7 +61,7 @@
         "src\\Deltics.Xml.Nodes.Dtd.Notation.pas",
         "src\\Deltics.Xml.Nodes.Elements.pas",
         "src\\Deltics.Xml.Nodes.Fragment.pas",
-        "src\\Deltics.Xml.Nodes.Process.pas",
+        "src\\Deltics.Xml.Nodes.ProcessingInstruction.pas",
         "src\\Deltics.Xml.Nodes.Prolog.pas",
         "src\\Deltics.Xml.Nodes.Text.pas"
       ]
