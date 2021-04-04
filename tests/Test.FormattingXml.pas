@@ -54,7 +54,7 @@ implementation
     doc: IXmlDocument;
     s: UnicodeString;
   begin
-    Xml.Load(doc).FromFile('X:\dev\src\delphi\libs\congress\deltics.xml\tests\samples\note.xml');
+    Xml.Load(doc).FromFile('%PROJECTDIR%\samples\note.xml');
 
     s := Xml.Format(doc)
             .Prolog(FALSE)
@@ -77,7 +77,7 @@ implementation
     doc: IXmlDocument;
     s: UnicodeString;
   begin
-    Xml.Load(doc).FromFile('X:\dev\src\delphi\libs\congress\deltics.xml\tests\samples\note.xml');
+    Xml.Load(doc).FromFile('%PROJECTDIR%\samples\note.xml');
 
     s := Xml.Format(doc)
             .Prolog(TRUE)
@@ -99,7 +99,7 @@ implementation
     doc: IXmlDocument;
     s: Utf8String;
   begin
-    Xml.Load(doc).FromFile('X:\dev\src\delphi\libs\congress\deltics.xml\tests\samples\note.xml');
+    Xml.Load(doc).FromFile('%PROJECTDIR%\samples\note.xml');
 
     s := Xml.Format(doc)
             .Prolog(FALSE)
