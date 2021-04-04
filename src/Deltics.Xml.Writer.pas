@@ -129,14 +129,26 @@ implementation
 
 
   procedure TXmlWriter.SaveDocument(const aDocument: IXmlDocument; const aStream: TStream);
+  var
+    defaultEncoding: Boolean;
   begin
-    fFirstLine  := TRUE;
-    fStream     := aStream;
+    defaultEncoding := NOT Assigned(fEncoding);
+    if defaultEncoding then
+      fEncoding := TEncoding.Utf8;
 
-    if DocumentProlog then
-      WriteProlog(aDocument.Standalone);
+    try
+      fFirstLine  := TRUE;
+      fStream     := aStream;
 
-    WriteDocument(aDocument);
+      if DocumentProlog then
+        WriteProlog(aDocument.Standalone);
+
+      WriteDocument(aDocument);
+
+    finally
+      if defaultEncoding then
+        fEncoding := NIL;
+    end;
   end;
 
 
@@ -306,18 +318,18 @@ implementation
 
   procedure TXmlWriter.WriteProlog(const aStandalone: Utf8String);
   var
-    encoding: Utf8String;
+    encodingName: Utf8String;
   begin
-    case fEncoding.Codepage of
-      cpUtf8    : encoding := 'UTF-8';
-      cpUtf16   : encoding := 'UTF-16';
-      cpUtf16LE : encoding := 'UTF-16LE';
+    case Encoding.Codepage of
+      cpUtf8    : encodingName := 'UTF-8';
+      cpUtf16   : encodingName := 'UTF-16';
+      cpUtf16LE : encodingName := 'UTF-16LE';
     end;
 
     if aStandalone <> '' then
-      WriteLine(Concat(['<?xml version="1.0" encoding="', encoding, '" standalone="', aStandalone, '"?>']))
+      WriteLine(Concat(['<?xml version="1.0" encoding="', encodingName, '" standalone="', aStandalone, '"?>']))
     else
-      WriteLine(Concat(['<?xml version="1.0" encoding="', encoding, '"?>']));
+      WriteLine(Concat(['<?xml version="1.0" encoding="', encodingName, '"?>']));
   end;
 
 
