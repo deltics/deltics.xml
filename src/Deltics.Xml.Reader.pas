@@ -9,9 +9,11 @@ interface
   uses
     Classes,
     SysUtils,
+    Deltics.InterfacedObjects,
     Deltics.IO.Streams,
+    Deltics.StringLists,
     Deltics.Strings,
-    Deltics.Xml,
+    Deltics.Xml.Interfaces,
     Deltics.Xml.Parser;
 
 
@@ -22,28 +24,28 @@ interface
     EXmlReader = class(Exception);
 
 
-    TXmlReader = class
+    TXmlReader = class(TComInterfacedObject)
     private
       fParser: IXmlReader;
     protected
-      function ReadCDATA: TXmlCDATA;
-      function ReadComment: TXmlComment;
-      function ReadDocType: TXmlDocType;
-      function ReadElement: TXmlElement;
-      function ReadInternalDtd: TXmlDocType;
-      function ReadNode: TXmlNode;
-      function ReadProcessingInstruction: TXmlNode;
-      function ReadText: TXmlText;
-      function ReadDtdAttList: TXmlDtdAttListDeclaration;
-      function ReadDtdContentParticles: TXmlDtdContentParticleList;
-      function ReadDtdDeclaration: TXmlDtdDeclaration;
-      function ReadDtdElement: TXmlDtdElementDeclaration;
-      function ReadDtdEntity: TXmlDtdEntityDeclaration;
-      function ReadDtdNotation: TXmlDtdNotationDeclaration;
-      procedure UnexpectedNode(const aNode: TXmlNode);
+      function ReadCDATA: IXmlCDATA;
+      function ReadComment: IXmlComment;
+      function ReadDocType: IXmlDocType;
+      function ReadElement: IXmlElement;
+      function ReadInternalDtd(const aRootElement: Utf8String = ''): IXmlDocType;
+      function ReadNode: IXmlNode;
+      function ReadProcessingInstruction: IXmlNode;
+      function ReadText: IXmlText;
+      function ReadDtdAttList: IXmlDtdAttributeList;
+      function ReadDtdContentParticles: IXmlDtdContentParticleList;
+      function ReadDtdDeclaration: IXmlDtdDeclaration;
+      function ReadDtdElement: IXmlDtdElement;
+      function ReadDtdEntity: IXmlDtdEntity;
+      function ReadDtdNotation: IXmlDtdNotation;
+      procedure UnexpectedNode(const aNode: IXmlNode);
     public
-      procedure LoadDocument(const aDocument: TXmlDocument; const aStream: TStream);
-      procedure LoadFragment(const aFragment: TXmlFragment; const aStream: TStream);
+      function LoadDocument(const aStream: TStream; const aErrors: IStringList; const aWarnings: IStringList): IXmlDocument;
+      function LoadFragment(const aStream: TStream; const aErrors: IStringList; const aWarnings: IStringList): IXmlFragment;
     end;
 
 
@@ -59,6 +61,28 @@ implementation
   {$endif}
 
 
+  uses
+    Windows,
+    Deltics.Xml.Nodes,
+    Deltics.Xml.Nodes.Attributes,
+    Deltics.Xml.Nodes.Attributes.Namespaces,
+    Deltics.Xml.Nodes.CDATA,
+    Deltics.Xml.Nodes.Comment,
+    Deltics.Xml.Nodes.DocType,
+    Deltics.Xml.Nodes.Document,
+    Deltics.Xml.Nodes.Dtd.Attributes,
+    Deltics.Xml.Nodes.Dtd.ContentParticles,
+    Deltics.Xml.Nodes.Dtd.Elements,
+    Deltics.Xml.Nodes.Dtd.Entities,
+    Deltics.Xml.Nodes.Dtd.Notation,
+    Deltics.Xml.Nodes.Elements,
+    Deltics.Xml.Nodes.Fragment,
+    Deltics.Xml.Nodes.ProcessingInstruction,
+    Deltics.Xml.Nodes.Prolog,
+    Deltics.Xml.Nodes.Text,
+    Deltics.Xml.Types;
+
+
 {$ifdef profile_XmlReader}
   var
     profiler: TProfile;
@@ -71,32 +95,34 @@ implementation
 
   type
     TXmlEndTag = class(TXmlNode)
-      Name: String;
-      function get_Xml: Utf8String; override;
+      Name: Utf8String;
+      function get_Name: Utf8String; override;
       procedure Assign(const aSource: TXmlNode); override;
-      constructor Create(const aName: String);
+      constructor Create(const aName: Utf8String);
     end;
 
 
 { TXmlEndTag }
 
-  constructor TXmlEndTag.Create(const aName: String);
+  constructor TXmlEndTag.Create(const aName: Utf8String);
   begin
     inherited Create(xmlEndTag);
+
     Name := aName;
   end;
 
 
-  function TXmlEndTag.get_Xml: Utf8String;
+  function TXmlEndTag.get_Name: Utf8String;
   begin
-    result := Utf8.FromString('</' + Name + '>');
+    result := Name;
   end;
 
 
   procedure TXmlEndTag.Assign(const aSource: TXmlNode);
   begin
     inherited;
-    Name := STR.FromUtf8(aSource.Name);
+
+    Name := aSource.Name;
   end;
 
 
@@ -108,16 +134,20 @@ implementation
 { TXmlReader }
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXmlReader.LoadDocument(const aDocument: TXmlDocument;
-                                    const aStream: TStream);
+  function TXmlReader.LoadDocument(const aStream: TStream;
+                                   const aErrors: IStringList;
+                                   const aWarnings: IStringList): IXmlDocument;
   var
-    node: TXmlNode;
+    node: IXmlNode;
+    nodes: TXmlNodeList;
   begin
   {$ifdef profile_XmlReader} profiler.Start('LoadDocument'); try {$endif}
 
-    aDocument.Clear;
+    result := TXmlDocument.Create;
 
-    fParser := TXmlParser.Create(aStream, aDocument.Errors, aDocument.Warnings);
+    InterfaceCast(result.Nodes, TXmlNodeList, nodes);
+
+    fParser := TXmlParser.Create(aStream, aErrors, aWarnings);
     try
       try
         while NOT fParser.EOF do
@@ -128,36 +158,36 @@ implementation
 
           case node.NodeType of
             xmlDocType  : begin
-                            if Assigned(aDocument.DocType) then
+                            if Assigned(result.DocType) then
                             begin
                               fParser.Error('An Xml document may only have one !DOCTYPE declaration or reference');
                               EXIT;
                             end;
 
-                            aDocument.DocType  := TXmlDocType(node);
+                            result.DocType  := node as IXmlDocType;
                           end;
 
             xmlElement  : begin
-                            if Assigned(aDocument.Root) then
+                            if Assigned(result.RootElement) then
                             begin
                               fParser.Error('An Xml document may only have one root node' {, '2.1.[1].1', 'http://www.w3.org/TR/REC-Xml/#NT-document'});
                               EXIT;
                             end;
 
-                            aDocument.Root := TXmlElement(node);
+                            result.RootElement := node as IXmlElement;
                           end;
           else
-            aDocument.Nodes.Add(node);
+            nodes.Add(node);
           end;
         end;
 
-        if NOT Assigned(aDocument.Root) then
+        if NOT Assigned(result.RootElement) then
           fParser.Error('No root node');
 
       except
-        on EAbort do ;
-        on EXmlParser do ;
-        on EXmlReader do ;
+//        on EAbort do ;
+//        on EXmlParser do ;
+//        on EXmlReader do ;
 
         on e: Exception do
         begin
@@ -174,18 +204,19 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXmlReader.LoadFragment(const aFragment: TXmlFragment;
-                                    const aStream: TStream);
+  function TXmlReader.LoadFragment(const aStream: TStream;
+                                   const aErrors: IStringList;
+                                   const aWarnings: IStringList): IXmlFragment;
   begin
   {$ifdef profile_XmlReader} profiler.Start('LoadFragment'); try {$endif}
 
-    aFragment.Clear;
+    result := TXmlFragment.Create;
 
-    fParser := TXmlParser.Create(aStream, aFragment.Errors, aFragment.Warnings);
+    fParser := TXmlParser.Create(aStream, aErrors, aWarnings);
     try
       try
         while NOT fParser.EOF do
-          aFragment.Add(ReadNode);
+          result.Add(ReadNode);
 
       except
         on EAbort do ;
@@ -205,15 +236,17 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXmlReader.UnexpectedNode(const aNode: TXmlNode);
+  procedure TXmlReader.UnexpectedNode(const aNode: IXmlNode);
+  var
+    node: TXmlNode;
   begin
-    fParser.Error('Unexpected node type: ' + aNode.ClassName);
-    aNode.Free;
+    InterfaceCast(aNode, TXmlNode, node);
+    fParser.Error('Unexpected node type: ' + node.ClassName);
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadCDATA: TXmlCDATA;
+  function TXmlReader.ReadCDATA: IXmlCDATA;
   begin
   {$ifdef profile_XmlReader} profiler.Start('ReadCDATA'); try {$endif}
 
@@ -224,7 +257,7 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadComment: TXmlComment;
+  function TXmlReader.ReadComment: IXmlComment;
   begin
   {$ifdef profile_XmlReader} profiler.Start('ReadComment'); try {$endif}
 
@@ -235,13 +268,12 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadDocType: TXmlDocType;
+  function TXmlReader.ReadDocType: IXmlDocType;
   var
     root: Utf8String;
     name: Utf8String;
     scope: Utf8String;
     location: Utf8String;
-    internal: TXmlDocType;
     c: Utf8Char;
   begin
   {$ifdef profile_XmlReader} profiler.Start('ReadDocType'); try {$endif}
@@ -253,8 +285,7 @@ implementation
 
     if c = '[' then
     begin
-      result := ReadInternalDtd;
-      result.Name := root;
+      result := ReadInternalDtd(root);
       EXIT;
     end;
 
@@ -267,156 +298,143 @@ implementation
             name      := fParser.ReadQuotedString;
             location  := fParser.ReadQuotedString;
 
-            result    := TXmlDocType.CreatePublic(root, name, location);
+            result    := TXmlDocType.Create(dtPUBLIC, root, name, location);
           end;
 
       1:  begin
             location  := fParser.ReadString;
-            result    := TXmlDocType.CreateSystem(root, location);
+            result    := TXmlDocType.Create(dtSYSTEM, root, location);
           end;
     else
       fParser.UnexpectedString(STR.FromUtf8(scope), 'Not a valid DOCTYPE declaration (expected internal subset, SYSTEM or PUBLIC)');
     end;
 
-    try
-      c := fParser.NextCharSkippingWhitespace;
-      case c of
-        '[' : begin
-                internal := ReadInternalDtd;
-                try
-                  result.InternalSubset := internal.Nodes;
-                  EXIT;
+    c := fParser.NextCharSkippingWhitespace;
+    case c of
+      '[' : begin
+              result := ReadInternalDtd;
+              EXIT;
+            end;
 
-                finally
-                  internal.Free;
-                end;
-              end;
-
-        '>' : EXIT;
-      end;
-
-      fParser.UnexpectedChar(c, 'Expected internal subset or DOCTYPE end');
-
-    except
-      result.Free;
-      raise;
+      '>' : EXIT;
     end;
+
+    fParser.UnexpectedChar(c, 'Expected internal subset or DOCTYPE end');
 
   {$ifdef profile_XmlReader} finally profiler.Finish end; {$endif}
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadElement: TXmlElement;
+  function TXmlReader.ReadElement: IXmlElement;
   var
     c: Utf8Char;
     name: Utf8String;
     value: Utf8String;
-    child: TXmlNode;
+    child: IXmlNode;
+    attr: IXmlAttribute;
   begin
   {$ifdef profile_XmlReader} profiler.Start('ReadElement'); try {$endif}
 
-    result := TXmlElement.CreateEmpty(fParser.ReadName);
-    try
-      while NOT fParser.EOF do
-      begin
-        c := fParser.NextCharSkippingWhitespace;
-        case c of
-          '/' : begin
-                  fParser.ExpectChar('>');
-                  EXIT;
-                end;
+    name    := fParser.ReadName;
+    result  := TXmlElement.CreateEmpty(name);
 
-          '>' : begin
-                  result.IsEmpty := FALSE;
+    while NOT fParser.EOF do
+    begin
+      c := fParser.NextCharSkippingWhitespace;
+      case c of
+        '/' : begin
+                fParser.ExpectChar('>');
+                EXIT;
+              end;
 
-                  while NOT fParser.EOF do
+        '>' : begin
+                result.IsEmpty := FALSE;
+
+                while NOT fParser.EOF do
+                begin
+                  child := ReadNode;
+
+                  if NOT Assigned(child) then
+                    BREAK;
+
+                  if (child.NodeType = xmlEndTag) then
                   begin
-                    child := ReadNode;
-
-                    if NOT Assigned(child) then
-                      BREAK;
-
-                    if (child.NodeType = xmlEndTag) then
-                    begin
-                      // TODO: properly...
-                      // if NOT (child.Name = result.Name) then
-                      //   UnexpectedEndTag(TXmlEndTag(child).Name, result.Name);
-                      child.Free;
-                      EXIT;
-                    end
-                    else
-                      result.Nodes.Add(child);
-                  end;
-
-                  // TODO: Report unclosed tag!
+                    // TODO: properly...
+                    // if NOT (child.Name = result.Name) then
+                    //   UnexpectedEndTag(TXmlEndTag(child).Name, result.Name);
+                    EXIT;
+                  end
+                  else
+                    result.Add(child);
                 end;
+
+                // TODO: Report unclosed tag!
+              end;
+      else
+        fParser.MoveBack;
+        name  := fParser.ReadStringUntil(Utf8Char('='));
+        value := fParser.ReadAttributeValue;
+
+        if (name = 'xmlns') or Utf8.BeginsWith(name, 'xmlns:') then
+          attr := TXmlNamespace.Create(name, value)
         else
-          fParser.MoveBack;
-          name  := fParser.ReadStringUntil(Utf8Char('='));
-          value := fParser.ReadAttributeValue;
+          attr := TXmlAttribute.Create(name, value);
 
-          result.Attributes.Add(TXmlAttribute.Create(name, value));
-        end;
+        result.Add(attr);
       end;
-
-      fParser.UnexpectedEOF;
-
-    except
-      FreeAndNIL(result);
-      raise;
     end;
+
+    fParser.UnexpectedEOF;
 
   {$ifdef profile_XmlReader} finally profiler.Finish end; {$endif}
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadInternalDtd: TXmlDocType;
+  function TXmlReader.ReadInternalDtd(const aRootElement: Utf8String): IXmlDocType;
   var
     c: Utf8Char;
-    node: TXmlNode;
+    node: IXmlNode;
+    subset: TXmlNodeList;
   begin
   {$ifdef profile_XmlReader} profiler.Start('ReadInternalDtd'); try {$endif}
 
-    result := TXmlDocType.CreateInternal('');
-    try
-      while NOT fParser.EOF do
+    result := TXmlDocType.Create(dtInternal, aRootElement);
+
+    InterfaceCast(result.InternalSubset, TXmlNodeList, subset);
+
+    while NOT fParser.EOF do
+    begin
+      c := fParser.NextCharSkippingWhitespace;
+      if (c = ']') then
       begin
-        c := fParser.NextCharSkippingWhitespace;
-        if (c = ']') then
-        begin
-          fParser.ExpectRealChar('>');
-          EXIT;
-        end;
-
-        fParser.MoveBack;
-        node := ReadNode;
-
-        if NOT (node.NodeType in [xmlComment,
-                                  xmlProcessingInstruction,
-                                  dtdAttList,
-                                  dtdElement,
-                                  dtdEntity,
-                                  dtdNotation]) then
-          UnexpectedNode(node)
-        else
-          result.Nodes.Add(node);
+        fParser.ExpectRealChar('>');
+        EXIT;
       end;
 
-      fParser.UnexpectedEOF;
+      fParser.MoveBack;
+      node := ReadNode;
 
-    except
-      result.Free;
-      raise;
+      if (node.NodeType in [xmlComment,
+                            xmlProcessingInstruction,
+                            xmlDtdAttributeList,
+                            xmlDtdElement,
+                            xmlDtdEntity,
+                            xmlDtdNotation]) then
+        subset.Add(node)
+      else
+        UnexpectedNode(node);
     end;
+
+    fParser.UnexpectedEOF;
 
   {$ifdef profile_XmlReader} finally profiler.Finish end; {$endif}
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadNode: TXmlNode;
+  function TXmlReader.ReadNode: IXmlNode;
   var
     element: TXmlElement absolute result;
     c: Utf8Char;
@@ -467,7 +485,7 @@ implementation
                       end;
 
                 '/' : begin
-                        result := TXmlEndTag.Create(STR.FromUtf8(fParser.ReadNameWithoutValidation));
+                        result := TXmlEndTag.Create(fParser.ReadNameWithoutValidation);
 
                         c := fParser.NextCharSkippingWhitespace;
                         if c <> '>' then
@@ -490,7 +508,7 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadProcessingInstruction: TXmlNode;
+  function TXmlReader.ReadProcessingInstruction: IXmlNode;
   {
     Returns either a true Processing Instruction OR an Xml Declaration (often
      erroneously called a processing instruction when it is not, although it
@@ -515,7 +533,7 @@ implementation
 
     target := fParser.ReadName;
 
-    if target = 'Xml' then
+    if target = 'xml' then
     begin
       try
         for i := 1 to 4 do  // We need to read up to 3 attributes + the closing tag
@@ -549,7 +567,7 @@ implementation
           begin
             fParser.ExpectString('?>');
 
-            result := TXmlDeclaration.Create(version, encoding, standalone);
+            result := TXmlProlog.Create(version, encoding, standalone);
             BREAK;
           end;
         end;
@@ -571,11 +589,13 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadText: TXmlText;
+  function TXmlReader.ReadText: IXmlText;
   var
     txt: Utf8String;
   begin
   {$ifdef profile_XmlReader} profiler.Start('ReadText'); try {$endif}
+
+    // TODO: Also stop on '&' (entity reference).  i.e. support entity references
 
     txt     := fParser.ReadStringUntil('<');
     result  := TXmlText.Create(txt);
@@ -587,26 +607,25 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadDtdAttList: TXmlDtdAttListDeclaration;
+  function TXmlReader.ReadDtdAttList: IXmlDtdAttributeList;
 
-    function ReadEnum: TStringList;
+    function ReadEnum: IUtf8StringList;
     var
       c: Utf8Char;
     begin
       fParser.ExpectChar('(');
 
-      result := TStringList.Create;
+      result := TUtf8StringList.CreateManaged;
       while NOT fParser.EOF do
       begin
         fParser.SkipWhiteSpace;
-        result.Add(STR.FromUtf8(fParser.ReadName));
+        result.Add(fParser.ReadName);
 
         c := fParser.NextCharSkippingWhitespace;
         case c of
           '|': { NO-OP} ;
           ')': EXIT;
         else
-          FreeAndNIL(result);
           fParser.UnexpectedChar(c);
         end;
       end;
@@ -616,114 +635,111 @@ implementation
     c: Utf8Char;
     typeidx: Integer;
     element: Utf8String;
+    attr: IXmlDtdAttribute;
+    attr_: TXmlDtdAttribute;
+    attrs: TXmlDtdAttributeList;
+    list: TXmlNodeList;
     attrName: Utf8String;
     attrType: TXmlDtdAttributeType;
-    attr: TXmlDtdAttributeDeclaration;
-    enum: TStringList;
+    members: IUtf8StringList;
   begin
     fParser.SkipWhitespace;
     element := fParser.ReadName;
 
-    result := TXmlDtdAttListDeclaration.Create;
-    result.ElementName := element;
-    try
-      while NOT fParser.EOF do
+    result := TXmlDtdAttributeList.Create(element);
+
+    InterfaceCast(result, TXmlDtdAttributeList, attrs);
+    InterfaceCast(attrs.Attributes, TXmlNodeList, list);
+
+    while NOT fParser.EOF do
+    begin
+      c := fParser.NextCharSkippingWhitespace;
+      if (c = '>') then
+        BREAK;
+
+      fParser.MoveBack;
+
+      attrName := fParser.ReadName;
+
+      c := fParser.PeekCharSkippingWhitespace;
+      if (c = '(') then
       begin
-        c := fParser.NextCharSkippingWhitespace;
-        if (c = '>') then
-          BREAK;
+        attrType  := atEnum;
+        members   := ReadEnum;
+      end
+      else
+      begin
+        typeidx := fParser.ExpectOneOf(['CDATA',
+                                        'ENTITY',
+                                        'ENTITIES',
+                                        'ID',
+                                        'IDREF',
+                                        'IDREFS',
+                                        'NMTOKEN',
+                                        'NMTOKENS',
+                                        'NOTATION']);
 
-        fParser.MoveBack;
-        attrName := fParser.ReadName;
+        case typeidx of
+          0 : attrType := atCDATA;
+          1 : attrType := atEntity;
+          2 : attrType := atEntities;
+          3 : attrType := atID;
+          4 : attrType := atIDREF;
+          5 : attrType := atIDREFS;
+          6 : attrType := atNmToken;
+          7 : attrType := atNmTokens;
+          8 : begin
+                attrType := atNotation;
 
-        c := fParser.PeekCharSkippingWhitespace;
-        if (c = '(') then
-        begin
-          attrType  := atEnum;
-          enum      := ReadEnum;
-        end
-        else
-        begin
-          typeidx := fParser.ExpectOneOf(['CDATA',
-                                          'ENTITY',
-                                          'ENTITIES',
-                                          'ID',
-                                          'IDREF',
-                                          'IDREFS',
-                                          'NMTOKEN',
-                                          'NMTOKENS',
-                                          'NOTATION']);
+                fParser.ExpectChar('(');
+                fParser.MoveBack;
 
-          case typeidx of
-            0 : attrType := atCDATA;
-            1 : attrType := atEntity;
-            2 : attrType := atEntities;
-            3 : attrType := atID;
-            4 : attrType := atIDREF;
-            5 : attrType := atIDREFS;
-            6 : attrType := atNmToken;
-            7 : attrType := atNmTokens;
-            8 : begin
-                  attrType := atNotation;
-                  fParser.ExpectChar('(');
-                  fParser.MoveBack;
-                  enum := ReadEnum;
-                end;
-          else
-            fParser.UnexpectedChar(c, 'Not a valid ATTLIST type declaration');
-            attrType := atUnknown;
-          end;
-        end;
-
-        attr := result.Add(attrName, attrType);
-
-        if attrType in [atEnum, atNotation] then
-        begin
-          attr.Members.Assign(enum);
-          FreeAndNIL(enum);
-        end;
-
-        try
-          c := fParser.PeekCharSkippingWhitespace;
-          if (c = '#') then
-          begin
-            fParser.MarkLocation;
-            try
-              case fParser.ExpectOneOf(['#REQUIRED',
-                                        '#IMPLIED',
-                                        '#FIXED']) of
-                0 : attr.Constraint := acRequired;
-                1 : attr.Constraint := acImplied;
-                2 : attr.Constraint := acFixed;
-              else
-                fParser.Abort('Invalid attribute constraint');
+                members := ReadEnum;
               end;
-
-              c := fParser.PeekCharSkippingWhitespace;
-
-            finally
-              fParser.UnmarkLocation;
-            end;
-          end;
-
-          if (c = '"') then
-            attr.DefaultValue := fParser.ReadQuotedString;
-
-        except
-          FreeAndNIL(result);
-          raise;
+        else
+          fParser.UnexpectedChar(c, 'Not a valid ATTLIST type declaration');
+          attrType := atUnknown;
         end;
       end;
 
-    except
-      result.Free;
-      raise;
+      attr := TXmlDtdAttribute.Create(attrName, attrType);
+      InterfaceCast(attr, TXmlDtdAttribute, attr_);
+
+      if Assigned(attr_.Members) then
+        attr_.Members := members;
+
+      c := fParser.PeekCharSkippingWhitespace;
+      if (c = '#') then
+      begin
+        fParser.MarkLocation;
+        try
+          case fParser.ExpectOneOf(['#REQUIRED',
+                                    '#IMPLIED',
+                                    '#FIXED']) of
+            0 : attr_.Constraint := acRequired;
+            1 : attr_.Constraint := acImplied;
+            2 : attr_.Constraint := acFixed;
+          else
+            fParser.Abort('Invalid attribute constraint');
+          end;
+
+          c := fParser.PeekCharSkippingWhitespace;
+
+        finally
+          fParser.UnmarkLocation;
+        end;
+      end;
+
+      if (c = '"') then
+        attr_.DefaultValue := fParser.ReadQuotedString;
+
+      list.Add(attr);
     end;
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadDtdDeclaration: TXmlDtdDeclaration;
+  function TXmlReader.ReadDtdDeclaration: IXmlDtdDeclaration;
   var
     decl: String;
   begin
@@ -756,7 +772,7 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadDtdContentParticles: TXmlDtdContentParticleList;
+  function TXmlReader.ReadDtdContentParticles: IXmlDtdContentParticleList;
 
     procedure ReadCardinality(var isRequired: Boolean; var isRepeating: Boolean);
     var
@@ -783,12 +799,12 @@ implementation
         if result[i].IsPCDATA and (result.ListType <> cpChoice) then
           errNotAChoice := TRUE;
 
-        if (result[i].NodeType = dtdContentParticleList) then
+        if (result[i].NodeType = xmlDtdContentParticleList) then
           CONTINUE;
 
         for j := 0 to Pred(result.Count) do
         begin
-          if (i = j) or (result[j].NodeType = dtdContentParticleList) then
+          if (i = j) or (result[j].NodeType = xmlDtdContentParticleList) then
             CONTINUE;
 
           if (result[i].Name = result[j].Name) then
@@ -806,7 +822,9 @@ implementation
     c: Utf8Char;
     req, rpt: Boolean;
     name: Utf8String;
-    part: TXmlDtdContentParticle;
+    mutableResult: TXmlDtdContentParticleList;
+    resultList: TXmlNodeList;
+    particle: TXmlDtdContentParticle;
     listTypeSet: Boolean;
   begin
   {$ifdef profile_XmlReader} profiler.Start('ReadDtdContentParticles'); try {$endif}
@@ -814,7 +832,11 @@ implementation
     listTypeSet := FALSE;
 
     result := TXmlDtdContentParticleList.Create;
-    result.ListType := cpChoice;
+
+    InterfaceCast(result, TXmlDtdContentParticleList, mutableResult);
+    InterfaceCast(mutableResult.ItemList, TXmlNodeList, resultList);
+
+    mutableResult.ListType := cpChoice;
 
     while NOT fParser.EOF do
     begin
@@ -830,29 +852,29 @@ implementation
               else
               begin
                 if (c = ',') then
-                  result.ListType := cpSequence;  // Choice by default so only need to set it if it is a sequence
+                  mutableResult.ListType := cpSequence;  // Choice by default so only need to set it if it is a sequence
 
                 listTypeSet := TRUE;
               end;
 
-        '(' : result.Add(ReadDtdContentParticles);
+        '(' : resultList.Add(ReadDtdContentParticles);
 
         '#' : begin
                 fParser.ExpectString('PCDATA');
 
-                part := TXmlDtdContentParticle.CreatePCDATA;
+                particle := TXmlDtdContentParticle.CreatePCDATA;
 
                 ReadCardinality(req, rpt);
-                part.IsRequired     := req;
-                part.AllowMultiple  := rpt;
+                particle.IsRequired     := req;
+                particle.AllowMultiple  := rpt;
 
-                result.Add(part);
+                resultList.Add(particle);
               end;
 
         ')' : begin
                 ReadCardinality(req, rpt);
-                result.IsRequired     := req;
-                result.AllowMultiple  := rpt;
+                mutableResult.IsRequired     := req;
+                mutableResult.AllowMultiple  := rpt;
 
                 Validate;
 
@@ -863,23 +885,23 @@ implementation
                 // TODO: Check this: CP using parameter entity ref
                 name := fParser.ReadStringUntil(';');
 
-                part := TXmlDtdContentParticle.Create(name);
+                particle := TXmlDtdContentParticle.Create(name);
                 ReadCardinality(req, rpt);
-                part.IsRequired     := req;
-                part.AllowMultiple  := rpt;
+                particle.IsRequired     := req;
+                particle.AllowMultiple  := rpt;
 
-                result.Add(part);
+                resultList.Add(particle);
               end;
       else
         fParser.MoveBack;
         name := fParser.ReadName;
         ReadCardinality(req, rpt);
 
-        part := TXmlDtdContentParticle.Create(name);
-        part.IsRequired     := req;
-        part.AllowMultiple  := rpt;
+        particle := TXmlDtdContentParticle.Create(name);
+        particle.IsRequired     := req;
+        particle.AllowMultiple  := rpt;
 
-        result.Add(part);
+        resultList.Add(particle);
       end;
     end;
 
@@ -890,18 +912,20 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadDtdElement: TXmlDtdElementDeclaration;
+  function TXmlReader.ReadDtdElement: IXmlDtdElement;
   var
-    name: String;
+    name: Utf8String;
     c: Utf8Char;
-    content: TXmlDtdContentParticleList;
+    content: IXmlDtdContentParticleList;
+    content_: TXmlDtdContentParticleList;
+    list: TXmlNodeList;
   begin
   {$ifdef profile_XmlReader} profiler.Start('ReadDtdElement'); try {$endif}
 
     result := NIL;
 
     fParser.SkipWhitespace;
-    name := STR.FromUtf8(fParser.ReadName);
+    name := fParser.ReadName;
 
     c := fParser.NextCharSkippingWhitespace;
 
@@ -910,36 +934,38 @@ implementation
               fParser.MoveBack;
               fParser.ExpectString('ANY');
 
-              result := TXmlDtdElementDeclaration.CreateANY(name);
+              result := TXmlDtdElement.CreateANY(name);
             end;
 
       'E' : begin
               fParser.MoveBack;
               fParser.ExpectString('EMPTY');
 
-              result := TXmlDtdElementDeclaration.CreateEMPTY(name);
+              result := TXmlDtdElement.CreateEMPTY(name);
             end;
 
       '(' : begin
               content := ReadDtdContentParticles;
-              result  := TXmlDtdElementDeclaration.Create(name, content);
+              result  := TXmlDtdElement.Create(name, content);
 
               if (result.Category = ecMixed) and Assigned(result.Content) then
               begin
                 if result.Content.IsRequired then
-                  fParser.Error('DTD ''Mixed'' ELEMENT (' + name + ') constraint error: Content cannot be required.');
+                  fParser.Error('DTD ''Mixed'' ELEMENT (' + Str.FromUtf8(name) + ') constraint error: Content cannot be required.');
 
                 if NOT result.Content.AllowMultiple then
-                  fParser.Error('DTD ''Mixed'' ELEMENT (' + name + ') constraint error: Content cannot be limited to one occurence.');
+                  fParser.Error('DTD ''Mixed'' ELEMENT (' + Str.FromUtf8(name) + ') constraint error: Content cannot be limited to one occurence.');
               end;
             end;
 
       '%' : begin
-              content := TXmlDtdContentParticleList.Create;
+              content_ := TXmlDtdContentParticleList.Create;
+              InterfaceCast(content_.ItemList, TXmlNodeList, list);
               repeat
-                content.Add(TXmlDtdContentParticle.Create('%' + fParser.ReadStringUntil(';') + ';'));
+                list.Add(TXmlDtdContentParticle.Create('%' + fParser.ReadStringUntil(';') + ';'));
               until (fParser.PeekCharSkippingWhitespace <> '%');
-              result := TXmlDtdElementDeclaration.Create(name, content);
+
+              result := TXmlDtdElement.Create(name, content_);
             end;
 
     else
@@ -953,7 +979,7 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadDtdEntity: TXmlDtdEntityDeclaration;
+  function TXmlReader.ReadDtdEntity: IXmlDtdEntity;
   var
     name: Utf8String;
     content: Utf8String;
@@ -972,12 +998,12 @@ implementation
 
     fParser.ExpectRealChar('>');
 
-    result := TXmlDtdEntityDeclaration.Create(name, content);
+    result := TXmlDtdEntity.Create(name, content);
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.ReadDtdNotation: TXmlDtdNotationDeclaration;
+  function TXmlReader.ReadDtdNotation: IXmlDtdNotation;
   var
     name: Utf8String;
   begin
@@ -1008,7 +1034,7 @@ implementation
 
     fParser.ExpectRealChar('>');
 
-    result := TXmlDtdNotationDeclaration.Create(name);
+    result := TXmlDtdNotation.Create(name);
   end;
 
 
