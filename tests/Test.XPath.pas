@@ -22,7 +22,8 @@ interface
 implementation
 
   uses
-    Deltics.Xml;
+    Deltics.Xml,
+    Samples;
 
 
 
@@ -34,7 +35,7 @@ implementation
 
   procedure XPath.SetupTest;
   begin
-    Xml.Load(doc).FromFile('%PROJECTDIR%\samples\menu.xml');
+    Xml.Load(doc).FromFile(Sample('menu'));
   end;
 
 

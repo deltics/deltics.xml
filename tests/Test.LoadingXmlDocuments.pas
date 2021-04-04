@@ -22,7 +22,8 @@ implementation
 
   uses
     Deltics.StringLists,
-    Deltics.Xml;
+    Deltics.Xml,
+    Samples;
 
 
 { XmlDocument }
@@ -34,8 +35,7 @@ implementation
   var
     note: IXmlElement;
   begin
-    // TODO: Support enfironment variables in filepath
-    Xml.Load(sut).FromFile('%PROJECTDIR%\samples\note.xml');
+    Xml.Load(sut).FromFile(Sample('note'));
 
     Test('Document').Assert(sut).IsAssigned;
     Test('Document.DocType').Assert(sut.DocType).IsNIL;

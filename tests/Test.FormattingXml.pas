@@ -25,7 +25,8 @@ implementation
     Deltics.StringTypes,
     Deltics.Xml,
     Deltics.Xml.Utils,
-    Deltics.Xml.Writer;
+    Deltics.Xml.Writer,
+    Samples;
 
 
 { FormattingXml }
@@ -54,7 +55,7 @@ implementation
     doc: IXmlDocument;
     s: UnicodeString;
   begin
-    Xml.Load(doc).FromFile('%PROJECTDIR%\samples\note.xml');
+    Xml.Load(doc).FromFile(Sample('note'));
 
     s := Xml.Format(doc)
             .Prolog(FALSE)
@@ -77,7 +78,7 @@ implementation
     doc: IXmlDocument;
     s: UnicodeString;
   begin
-    Xml.Load(doc).FromFile('%PROJECTDIR%\samples\note.xml');
+    Xml.Load(doc).FromFile(Sample('note'));
 
     s := Xml.Format(doc)
             .Prolog(TRUE)
@@ -99,7 +100,7 @@ implementation
     doc: IXmlDocument;
     s: Utf8String;
   begin
-    Xml.Load(doc).FromFile('%PROJECTDIR%\samples\note.xml');
+    Xml.Load(doc).FromFile(Sample('note'));
 
     s := Xml.Format(doc)
             .Prolog(FALSE)

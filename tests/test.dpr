@@ -43,7 +43,8 @@ uses
   Deltics.Xml.Formatter in '..\src\Deltics.Xml.Formatter.pas',
   Deltics.Xml.XPath in '..\src\Deltics.Xml.XPath.pas',
   Deltics.Xml.Selections in '..\src\Deltics.Xml.Selections.pas',
-  Test.XPath in 'Test.XPath.pas';
+  Test.XPath in 'Test.XPath.pas',
+  Samples in 'Samples.pas';
 
 begin
   TestRun.Test(BuildingXmlDocuments);
