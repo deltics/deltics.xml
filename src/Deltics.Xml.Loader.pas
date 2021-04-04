@@ -72,9 +72,18 @@ implementation
 
   procedure TXmlLoader.FromFile(const aFilename: String);
   var
+    projectdir: String;
     filename: String;
   begin
-    filename := StringReplace(aFilename, '%PROJECTDIR%', GetEnvironmentVariable('PROJECTDIR'), [rfReplaceAll, rfIgnoreCase]);
+    if Pos('%PROJECTDIR%', aFilename) > 0 then
+    begin
+      projectdir  := GetEnvironmentVariable('PROJECTDIR');
+      filename    := StringReplace(aFilename, '%PROJECTDIR%', projectdir, [rfReplaceAll, rfIgnoreCase])
+    end
+    else
+      filename := aFilename;
+
+    filename := Path.Absolute(filename);
 
     FromStreamDisposing(TFileStream.Create(filename, fmOpenRead or fmShareDenyWrite));
   end;
