@@ -1,4 +1,8 @@
-unit Deltics.Xml.Interfaces;
+
+{$i deltics.xml.inc}
+
+  unit Deltics.Xml.Interfaces;
+
 
 interface
 
@@ -94,7 +98,11 @@ interface
     end;
 
 
+  {$ifdef Generics}
+    NullableBooleanProp = NullableBoolean;
+  {$else}
     NullableBooleanProp = ^NullableBoolean;
+  {$endif}
 
     IXmlDocument = interface(IXmlNode)
     ['{677EBA8B-54C0-434B-BD91-E7AFEE0CAB3B}']

@@ -122,7 +122,11 @@ implementation
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlDocument.get_Standalone: NullableBooleanProp;
   begin
+  {$ifNdef Generics}
     result := @fStandalone;
+  {$else}
+    result := fStandalone;
+  {$endif}
   end;
 
 
