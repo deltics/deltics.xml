@@ -10,49 +10,47 @@ interface
     Types,
     Deltics.InterfacedObjects,
     Deltics.StringTypes,
-    Deltics.XML;
+    Deltics.Xml.Interfaces;
 
   type
-    TXMLNodeSelection = class(TComInterfacedObject, IXMLNodeSelection)
+    TXmlNodeSelection = class(TComInterfacedObject, IXmlNodeSelection)
     private
-      fList: TList;
+      fList: IInterfacedObjectList;
     public
       constructor Create;
-      destructor Destroy; override;
-      procedure Add(const aNode: TXMLNode); overload;
-      procedure Add(const aSelection: IXMLNodeSelection); overload;
-      procedure Remove(const aNode: TXMLNode);
+      procedure Add(const aNode: IXmlNode); overload;
+      procedure Add(const aSelection: IXmlNodeSelection); overload;
+      procedure Remove(const aNode: IXmlNode);
 
-    protected // IXMLNodeSelection
+    protected // IXmlNodeSelection
       function get_Count: Integer;
-      function get_First: TXmlNode;
-      function get_Last: TXmlNode;
-      function get_Node(const aIndex: Integer): TXMLNode;
+      function get_First: IXmlNode;
+      function get_Last: IXmlNode;
+      function get_Item(const aIndex: Integer): IXmlNode;
     public
       property Count: Integer read get_Count;
-      property Nodes[const aIndex: Integer]: TXMLNode read get_Node;
+      property Items[const aIndex: Integer]: IXmlNode read get_Item;
     end;
 
 
-    TXMLElementSelection = class(TXMLNodeSelection, IXMLElementSelection)
+    TXmlElementSelection = class(TXmlNodeSelection, IXmlElementSelection)
     protected
-      function get_ElementItem(const aIndex: Integer): TXMLElement;
+      function get_Item(const aIndex: Integer): IXmlElement; overload;
     public
-      constructor Create(const aNodes: TXMLNodeList);
-      function ItemByName(const aName: Utf8String): TXMLElement;
-      property Items[const aIndex: Integer]: TXMLElement read get_ElementItem; default;
-      function IXMLElementSelection.get_Item = get_ElementItem;
+      constructor Create(const aElement: IXmlElement); overload;
+      constructor Create(const aNodes: IXmlNodeList); overload;
+      function ItemByName(const aName: Utf8String): IXmlElement;
+      property Items[const aIndex: Integer]: IXmlElement read get_Item;
     end;
 
 
-    TXMLNamespaceSelection = class(TXMLNodeSelection, IXMLNamespaceSelection)
+    TXmlNamespaceSelection = class(TXmlNodeSelection, IXmlNamespaceSelection)
     protected
-      function get_NamespaceItem(const aIndex: Integer): TXMLNamespace;
+      function get_Item(const aIndex: Integer): IXmlNamespace; overload;
     public
-      constructor Create(const aNodes: TXMLNodeList);
-      function ItemByPrefix(const aPrefix: UTF8String): TXMLNamespace;
-      property Items[const aIndex: Integer]: TXMLNamespace read get_NamespaceItem; default;
-      function IXMLNamespaceSelection.get_Item = get_NamespaceItem;
+      constructor Create(const aNodes: IXmlNodeList);
+      function ItemByPrefix(const aPrefix: Utf8String): IXmlNamespace;
+      property Items[const aIndex: Integer]: IXmlNamespace read get_Item;
     end;
 
 
@@ -60,72 +58,64 @@ interface
 implementation
 
   uses
-    SysUtils;
+    SysUtils,
+    Deltics.Xml.Types;
 
 
-{ TXMLNodeSelection ------------------------------------------------------------------------------ }
+{ IXmlNodeSelection ------------------------------------------------------------------------------ }
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  constructor TXMLNodeSelection.Create;
+  constructor TXmlNodeSelection.Create;
   begin
     inherited Create;
 
-    fList := TList.Create;
+    fList := TInterfacedObjectList.Create;
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  destructor TXMLNodeSelection.Destroy;
-  begin
-    FreeAndNIL(fList);
-
-    inherited;
-  end;
-
-
-  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXMLNodeSelection.get_Count: Integer;
+  function TXmlNodeSelection.get_Count: Integer;
   begin
     result := fList.Count;
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXMLNodeSelection.get_First: TXmlNode;
+  function TXmlNodeSelection.get_First: IXmlNode;
   begin
     result := NIL;
 
     if fList.Count > 0 then
-      result := TXmlNode(fList[0]);
+      result := IXmlNode(fList[0]);
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXMLNodeSelection.get_Last: TXmlNode;
+  function TXmlNodeSelection.get_Last: IXmlNode;
   begin
     result := NIL;
 
     if fList.Count > 0 then
-      result := TXmlNode(fList[fList.Count - 1]);
+      result := IXmlNode(fList[fList.Count - 1]);
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXMLNodeSelection.get_Node(const aIndex: Integer): TXMLNode;
+  function TXmlNodeSelection.get_Item(const aIndex: Integer): IXmlNode;
   begin
-    result := TXMLNode(fList[aIndex]);
+    result := IXmlNode(fList[aIndex]);
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXMLNodeSelection.Add(const aNode: TXMLNode);
+  procedure TXmlNodeSelection.Add(const aNode: IXmlNode);
   begin
     fList.Add(aNode);
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXMLNodeSelection.Add(const aSelection: IXMLNodeSelection);
+  procedure TXmlNodeSelection.Add(const aSelection: IXmlNodeSelection);
   var
     i: Integer;
   begin
@@ -135,7 +125,7 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXMLNodeSelection.Remove(const aNode: TXMLNode);
+  procedure TXmlNodeSelection.Remove(const aNode: IXmlNode);
   begin
     fList.Remove(aNode);
   end;
@@ -146,10 +136,10 @@ implementation
 
 
 
-{ TXMLElementSelection --------------------------------------------------------------------------- }
+{ IXmlElementSelection --------------------------------------------------------------------------- }
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  constructor TXMLElementSelection.Create(const aNodes: TXMLNodeList);
+  constructor TXmlElementSelection.Create(const aNodes: IXmlNodeList);
   var
     i: Integer;
   begin
@@ -162,14 +152,23 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXMLElementSelection.get_ElementItem(const aIndex: Integer): TXMLElement;
+  constructor TXmlElementSelection.Create(const aElement: IXmlElement);
   begin
-    result := TXMLElement(inherited get_Node(aIndex));
+    inherited Create;
+
+    Add(aElement);
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXMLElementSelection.ItemByName(const aName: UTF8String): TXMLElement;
+  function TXmlElementSelection.get_Item(const aIndex: Integer): IXmlElement;
+  begin
+    result := inherited Items[aIndex] as IXmlElement;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlElementSelection.ItemByName(const aName: Utf8String): IXmlElement;
   var
     i: Integer;
   begin
@@ -186,35 +185,34 @@ implementation
 
 
 
-{ TXMLNamespaceSelection ------------------------------------------------------------------------- }
+{ IXmlNamespaceSelection ------------------------------------------------------------------------- }
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  constructor TXMLNamespaceSelection.Create(const aNodes: TXMLNodeList);
+  constructor TXmlNamespaceSelection.Create(const aNodes: IXmlNodeList);
   var
     i: Integer;
-    node: TXMLNode;
-    attr: TXMLAttribute absolute node;
+    node: IXmlNode;
   begin
     inherited Create;
 
     for i := 0 to Pred(aNodes.Count) do
     begin
-      node := aNodes[i];
-      if (node.NodeType = xmlAttribute) and attr.IsNamespaceBinding then
+      node := Items[i];
+      if (node.NodeType = xmlNamespace) then
         Add(node);
     end;
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXMLNamespaceSelection.get_NamespaceItem(const aIndex: Integer): TXMLNamespace;
+  function TXmlNamespaceSelection.get_Item(const aIndex: Integer): IXmlNamespace;
   begin
-    result := TXMLNamespace(inherited get_Node(aIndex));
+    result := inherited Items[aIndex] as IXmlNamespace;
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXMLNamespaceSelection.ItemByPrefix(const aPrefix: UTF8String): TXMLNamespace;
+  function TXmlNamespaceSelection.ItemByPrefix(const aPrefix: Utf8String): IXmlNamespace;
   var
     i: Integer;
   begin

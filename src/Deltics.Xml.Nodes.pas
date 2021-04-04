@@ -24,21 +24,19 @@ interface
       function get_NodeType: TXmlNodeType;
       function get_Parent: IXmlNode;
       function get_Text: Utf8String; virtual;
-//      function get_Path: Utf8String;
-//      function get_Text: Utf8String;
+      function get_Path: Utf8String;
     public
       function Clone: IXmlNode;
       procedure Delete;
-//      function SelectAttribute(const aPath: Utf8String): IXmlAttribute; overload;
-//      function SelectAttribute(const aElementPath: Utf8String; const aAttribute: Utf8String): IXmlAttribute; overload;
-//      function SelectElement(const aPath: Utf8String): IXmlElement;
-//      function SelectNode(const aPath: Utf8String): TXmlNode;
-//      function SelectNodes(const aPath: Utf8String): IXmlNodeSelection;
+      function SelectAttribute(const aPath: Utf8String): IXmlAttribute; overload;
+      function SelectAttribute(const aElementPath: Utf8String; const aAttribute: Utf8String): IXmlAttribute; overload;
+      function SelectElement(const aPath: Utf8String): IXmlElement;
+      function SelectNode(const aPath: Utf8String): IXmlNode;
+      function SelectNodes(const aPath: Utf8String): IXmlNodeSelection;
 
     private
       fNodeType: TXmlNodeType;
       fParent: TXmlNode;
-//      procedure set_Text(const Value: Utf8String);
     protected
       constructor Create(const aNodeType: TXmlNodeType);
       function Accepts(const aNode: TXmlNode): Boolean; virtual;
@@ -51,6 +49,7 @@ interface
       property Name: Utf8String read get_Name;
       property NodeType: TXmlNodeType read fNodeType;
       property Parent: TXmlNode read fParent write fParent;
+      property Path: Utf8String read get_Path;
     end;
 
 
@@ -84,6 +83,8 @@ interface
     TXmlNodeList = class(TInterfacedObjectList, IXmlNodeList)
     protected // IXmlNodeList
       function get_Item(const aIndex: Integer): IXmlNode;
+      function IndexOf(const aNode: IXmlNode): Integer;
+      function ItemByName(const aName: Utf8String): IXmlNode;
 
     private
       fOwner: TXmlNode;
@@ -101,7 +102,6 @@ interface
       procedure Clear;
       procedure Delete(const aIndex: Integer); overload;
       procedure Delete(const aNode: IXmlNode); overload;
-      function IndexOf(const aNode: IXmlNode): Integer;
       property Count: Integer read get_Count;
       property Items[const aIndex: Integer]: IXmlNode read get_Item;
       property Nodes[const aIndex: Integer]: TXmlNode read get_Node; default;
@@ -121,7 +121,8 @@ implementation
     Deltics.Xml.Exceptions,
     Deltics.Xml.Nodes.Attributes,
     Deltics.Xml.Nodes.Elements,
-    Deltics.Xml.Utils;
+    Deltics.Xml.Utils,
+    Deltics.Xml.XPath;
 
 
 
@@ -214,16 +215,14 @@ implementation
   end;
 
 
-(*
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlNode.get_Path: Utf8String;
   begin
     if Assigned(fParent) then
-      result := Parent.Path + '/' + Name
+      result := Concat([fParent.Path, '/', Name])
     else
       result := Name;
   end;
-*)
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
@@ -289,7 +288,6 @@ implementation
 
 
 
-(*
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlNode.SelectAttribute(const aPath: Utf8String): IXmlAttribute;
   var
@@ -333,133 +331,19 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlNode.SelectNode(const aPath: Utf8String): TXmlNode;
-  var
-    element: TXmlElement absolute result;
-    i: Integer;
-    query: Utf8String;
-    elements: IXmlElementSelection;
-    template: TStringTemplate;
-    match: TStringList;
-    subquery: Utf8String;
-    parts: StringArray;
-    elementName: Utf8String;
-    attrName: Utf8String;
+  function TXmlNode.SelectNode(const aPath: Utf8String): IXmlNode;
   begin
-    result  := NIL;
-    query   := aPath;
-
-    if (query <>'') and (query[1] = '/') then
-    begin
-      elements := TXmlElementSelection.Create(Document.Nodes);
-      System.Delete(query, 1, 1);
-    end
-    else case NodeType of
-      xmlElement  : elements := TXmlElementSelection.Create(TXmlElement(self).Nodes);
-      xmlDocument : elements := TXmlElementSelection.Create(TXmlDocument(self).Nodes);
-    else
-      EXIT;
-    end;
-
-    template := TStringTemplate.Create('', '{', '}');
-    match    := TStringList.Create;
-    try
-      if template.Matches('{root}/{subquery}', STR.FromUtf8(query), match) then
-      begin
-        elementName := Utf8.FromString(match.Values['root']);
-        subquery    := Utf8.FromString(match.Values['subquery']);
-
-        for i := 0 to Pred(elements.Count) do
-          if (elements[i].Name = elementName) then
-          begin
-            result := elements[i].SelectNode(subquery);
-            if Assigned(result) then
-              BREAK;
-          end;
-      end
-      else
-      begin
-        case STR.Split(STR.FromUtf8(query), '@', parts) of
-          1 : begin
-                elementName := query;
-                attrName    := ''
-              end;
-
-          2 : begin
-                elementName := Utf8.FromString(parts[0]);
-                attrName    := Utf8.FromString(parts[1]);
-              end;
-        end;
-
-        result := elements.ItemByName(elementName);
-
-        if Assigned(result) and (attrName <> '') then
-        begin
-          if (result.NodeType <> xmlElement) then
-            raise Exception.CreateFmt('''%s'' is not an element', [result.Path]);
-
-          result := element.Attributes.ByName(attrName);
-        end;
-      end;
-
-    finally
-      match.Free;
-      template.Free;
-    end;
+    result := XPath.SelectNode(self, aPath);
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlNode.SelectNodes(const aPath: Utf8String): IXmlNodeSelection;
-  var
-    i: Integer;
-    query: Utf8String;
-    selection: TXmlNodeSelection;
-    elements: IXmlElementSelection;
-    template: TStringTemplate;
-    match: TStringList;
-    root: Utf8String;
-    subquery: Utf8String;
   begin
-    selection := TXmlNodeSelection.Create;
-    result    := selection;
-
-    query := aPath;
-    if (query <> '') and (query[1] = '/') then
-    begin
-      elements := TXmlElementSelection.Create(Document.Nodes);
-      System.Delete(query, 1, 1);
-    end
-    else case NodeType of
-      xmlElement  : elements := TXmlElementSelection.Create(TXmlElement(self).Nodes);
-      xmlDocument : elements := TXmlElementSelection.Create(TXmlDocument(self).Nodes);
-    else
-      EXIT;
-    end;
-
-    template  := TStringTemplate.Create('[root]/[subquery]');
-    match     := TStringList.Create;
-    try
-      if template.Matches(STR.FromUtf8(query), match) then
-      begin
-        root      := Utf8.FromString(match.Values['root']);
-        subquery  := Utf8.FromString(match.Values['subquery']);
-
-        for i := 0 to Pred(elements.Count) do
-          if (elements[i].Name = root) then
-            selection.Add(elements[i].SelectNodes(subquery));
-      end
-      else
-        for i := 0 to Pred(elements.Count) do
-          if (elements[i].Name = query) then
-            selection.Add(elements[i]);
-
-    finally
-      match.Free;
-      template.Free;
-    end;
+    result := XPath.SelectNodes(self, aPath);
   end;
-*)
+
+
 
 
 
@@ -672,6 +556,22 @@ implementation
   function TXmlNodeList.IndexOf(const aNode: IXmlNode): Integer;
   begin
     result := inherited IndexOf((aNode as IInterfacedObject).AsObject);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlNodeList.ItemByName(const aName: Utf8String): IXmlNode;
+  var
+    i: Integer;
+  begin
+    for i := 0 to Pred(Count) do
+    begin
+      result := Items[i];
+      if result.Name = aName then
+        EXIT;
+    end;
+
+    result := NIL;
   end;
 
 

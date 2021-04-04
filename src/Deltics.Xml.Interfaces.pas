@@ -38,6 +38,7 @@ interface
     IXmlNamespaceNode           = interface;
     IXmlNode                    = interface;
     IXmlNodeList                = interface;
+    IXmlNodeSelection           = interface;
     IXmlProlog                  = interface;
     IXmlText                    = interface;
 
@@ -74,15 +75,12 @@ interface
       function get_NodeType: TXmlNodeType;
       function get_Parent: IXmlNode;
       function get_Text: Utf8String;
-//      function get_Path: Utf8String;
+      function get_Path: Utf8String;
 
-      procedure Delete;
-//      function SelectAttribute(const aPath: Utf8String): IXmlAttribute; overload;
-//      function SelectAttribute(const aElementPath: Utf8String; const aAttribute: Utf8String): IXmlAttribute; overload;
-//      function SelectElement(const aPath: Utf8String): IXmlElement;
-//      function SelectNode(const aPath: Utf8String): IXmlNode;
-//      function SelectNodes(const aPath: Utf8String): IXmlNodeSelection;
       function Clone: IXmlNode;
+      procedure Delete;
+      function SelectNode(const aPath: Utf8String): IXmlNode;
+      function SelectNodes(const aPath: Utf8String): IXmlNodeSelection;
 
       property AsAttribute: IXmlAttribute read get_AsAttribute;
       property AsElement: IXmlElement read get_AsElement;
@@ -92,7 +90,7 @@ interface
       property NodeType: TXmlNodeType read get_NodeType;
       property Parent: IXmlNode read get_Parent;
       property Text: Utf8String read get_Text;
-//      property Path: Utf8String read get_Path;
+      property Path: Utf8String read get_Path;
     end;
 
 
@@ -354,6 +352,7 @@ interface
       function get_Count: Integer;
       function get_Item(const aIndex: Integer): IXmlNode;
       function IndexOf(const aNode: IXmlNode): Integer;
+      function ItemByName(const aName: Utf8String): IXmlNode;
       property Count: Integer read get_Count;
       property Items[const aIndex: Integer]: IXmlNode read get_Item; default;
     end;
@@ -420,6 +419,39 @@ interface
       function Yielding: IXmlFormatterYields;
     end;
 
+
+
+
+
+
+    IXmlNodeSelection = interface
+    ['{998632E0-22EA-44E8-BC3B-DDA83F55502C}']
+      function get_Count: Integer;
+      function get_First: IXmlNode;
+      function get_Last: IXmlNode;
+      function get_Item(const aIndex: Integer): IXmlNode;
+
+      property Count: Integer read get_Count;
+      property Items[const aIndex: Integer]: IXMLNode read get_Item; default;
+    end;
+
+
+    IXmlElementSelection = interface(IXmlNodeSelection)
+    ['{A1076722-FAA1-46E9-9D05-07BA9785C2B7}']
+      function get_Item(const aIndex: Integer): IXmlElement;
+
+      function ItemByName(const aName: Utf8String): IXmlElement;
+      property Items[const aIndex: Integer]: IXmlElement read get_Item; default;
+    end;
+
+
+    IXmlNamespaceSelection = interface(IXmlNodeSelection)
+    ['{228ACC12-C0AB-4E84-A318-ED59C0BDCF3E}']
+      function get_Item(const aIndex: Integer): IXmlNamespace;
+
+      function ItemByPrefix(const aPrefix: Utf8String): IXmlNamespace;
+      property Items[const aIndex: Integer]: IXmlNamespace read get_Item; default;
+    end;
 
 
 

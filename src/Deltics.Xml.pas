@@ -84,8 +84,15 @@ interface
   // Interfaces
   type
     IXmlDocument  = Deltics.Xml.Interfaces.IXmlDocument;
+    IXmlAttribute = Deltics.Xml.Interfaces.IXmlAttribute;
+    IXmlComment   = Deltics.Xml.Interfaces.IXmlComment;
     IXmlElement   = Deltics.Xml.Interfaces.IXmlElement;
+    IXmlNode      = Deltics.Xml.Interfaces.IXmlNode;
+    IXmlText      = Deltics.Xml.Interfaces.IXmlText;
 
+    IXmlNodeSelection       = Deltics.Xml.Interfaces.IXmlNodeSelection;
+    IXmlElementSelection    = Deltics.Xml.Interfaces.IXmlElementSelection;
+    IXmlNamespaceSelection  = Deltics.Xml.Interfaces.IXmlNamespaceSelection;
 
   // Factories
   type
