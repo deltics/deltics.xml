@@ -37,6 +37,7 @@ interface
     IXmlDtdNotation             = interface;
     IXmlElement                 = interface;
     IXmlFpi                     = interface;
+    IXmlHasNodes                = interface;
     IXmlNamespace               = interface;
     IXmlNamespaceList           = interface;
     IXmlNamespaceNode           = interface;
@@ -66,6 +67,14 @@ interface
       property Organisation: Utf8String read get_Organisation write set_Organisation;
       property DocumentType: Utf8String read get_DocumentType write set_DocumentType;
       property Language: Utf8String read get_Language write set_Language;
+    end;
+
+
+    IXmlHasNodes = interface
+    ['{6775CEAD-B9D7-4487-BF10-E72EE7F57868}']
+      function get_Nodes: IXmlNodeList;
+
+      property Nodes: IXmlNodeList read get_Nodes;
     end;
 
 
@@ -423,7 +432,7 @@ interface
     ['{864B88D3-DA39-4E1A-9070-6DE62E66AF37}']
       function AsUnicodeString: UnicodeString;
       function AsUtf8String: Utf8String;
-      function LineEndings(const aValue: TXmlFormatterLineEndings): IXmlFormatter;
+      function LineEndings(const aValue: TXmlLineEndings): IXmlFormatter;
       function Prolog(const aValue: Boolean): IXmlFormatter;
       function Readable(const aValue: Boolean): IXmlFormatter;
       function Yielding: IXmlFormatterYields;

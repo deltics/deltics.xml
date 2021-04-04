@@ -8,6 +8,7 @@ interface
 
   uses
     Classes,
+    Deltics.IO.Streams,
     Deltics.Nullable,
     Deltics.StringEncodings,
     Deltics.StringLists,
@@ -16,11 +17,11 @@ interface
 
 
   type
-    TXmlDocument = class(TXmlNode, IXmlDocument)
+    TXmlDocument = class(TXmlNode, IXmlDocument, IXmlHasNodes)
     protected // IXmlNode
       function get_Name: Utf8String; override;
 
-    protected // IXmlDocument
+    protected // IXmlDocument + IXmlHasNodes
       function get_DocType: IXmlDocType;
       function get_Nodes: IXmlNodeList;
       function get_Prolog: IXmlProlog;
@@ -47,7 +48,12 @@ interface
       procedure NodeDeleted(const aNode: IXmlNode); override;
     public
       constructor Create;
-      procedure Clear;
+      constructor CreateFromFile(const aFilename: String; const aEncoding: TEncoding = NIL);
+      constructor CreateFromStream(const aStream: TStream; const aEncoding: TEncoding = NIL);
+      constructor CreateFromString(const aXml: AnsiString); overload;
+      constructor CreateFromString(const aXml: UnicodeString); overload;
+      constructor CreateFromUtf8(const aXml: Utf8String);
+      procedure Reset;
       property DocType: IXmlDocType read fDocType write set_DocType;
       property Nodes: IXmlNodeList read fNodes;
       property Prolog: IXmlProlog read fProlog;
@@ -62,7 +68,10 @@ implementation
   uses
     SysUtils,
     Deltics.InterfacedObjects,
+    Deltics.Strings,
+    Deltics.Xml.Loader,
     Deltics.Xml.Nodes.DocType,
+    Deltics.Xml.Reader,
     Deltics.Xml.Types,
     Deltics.Xml.Writer;
 
@@ -82,6 +91,68 @@ implementation
     fNodes := TXmlNodeList.Create(self);
 
     fStandalone := '';
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  constructor TXmlDocument.CreateFromFile(const aFilename: String;
+                                          const aEncoding: TEncoding);
+  var
+    stream: TFileStream;
+  begin
+    stream := TFileStream.Create(aFilename, fmOpenRead or fmShareDenyWrite);
+    try
+      CreateFromStream(stream, aEncoding);
+
+    finally
+      stream.Free;
+    end;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  constructor TXmlDocument.CreateFromStream(const aStream: TStream;
+                                            const aEncoding: TEncoding);
+  begin
+    inherited Create(xmlDocument);
+
+    fNodes := TXmlNodeList.Create(self);
+
+    fStandalone := '';
+
+    TXmlReader.LoadDocument(self, aStream, NIL, NIL);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  constructor TXmlDocument.CreateFromString(const aXml: AnsiString);
+  var
+    stream: IStream;
+    wideXml: UnicodeString;
+  begin
+    wideXml := Wide.FromAnsi(aXml);
+    stream  := TFixedMemoryStream.Create(Pointer(wideXml), Length(wideXml) * 2);
+    CreateFromStream(stream.Stream, Encoding.Utf16LE);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  constructor TXmlDocument.CreateFromString(const aXml: UnicodeString);
+  var
+    stream: IStream;
+  begin
+    stream := TFixedMemoryStream.Create(Pointer(aXml), Length(aXml) * 2);
+    CreateFromStream(stream.Stream, Encoding.Utf16LE);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  constructor TXmlDocument.CreateFromUtf8(const aXml: Utf8String);
+  var
+    stream: IStream;
+  begin
+    stream := TFixedMemoryStream.Create(Pointer(aXml), Length(aXml));
+    CreateFromStream(stream.Stream, Encoding.Utf8);
   end;
 
 
@@ -292,13 +363,11 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXmlDocument.Clear;
+  procedure TXmlDocument.Reset;
   var
     nodes: TXmlNodeList;
   begin
     InterfaceCast(fNodes, TXmlNodeList, nodes);
-
-    fRootElement := NIL;
 
     nodes.Clear;
   end;
@@ -312,11 +381,6 @@ implementation
     InterfaceCast(fNodes, TXmlNodeList, nodes);
 
     nodes.Delete(aNode);
-
-    if aNode = fDocType then
-      fDocType := NIL
-    else if aNode = fRootElement then
-      fRootElement := NIL;
   end;
 
 

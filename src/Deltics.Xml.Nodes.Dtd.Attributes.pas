@@ -45,7 +45,10 @@ interface
 
 
 
-    TXmlDtdAttributeList = class(TXmlDtdDeclaration, IXmlDtdAttributeList)
+    TXmlDtdAttributeList = class(TXmlDtdDeclaration, IXmlDtdAttributeList, IXmlHasNodes)
+    protected // IXmlHasNodes
+      function get_Nodes: IXmlNodeList;
+
     protected // IXmlNode
       function get_Name: Utf8String; override;
 
@@ -198,6 +201,13 @@ implementation
   function TXmlDtdAttributeList.get_Name: Utf8String;
   begin
     result := '#dtd-attribute-list';
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlDtdAttributeList.get_Nodes: IXmlNodeList;
+  begin
+    result := fItems;
   end;
 
 

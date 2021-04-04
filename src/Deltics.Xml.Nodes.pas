@@ -92,7 +92,7 @@ interface
     protected
       function Accepts(const aNode: TXmlNode): Boolean; virtual;
       function InternalAdd(const aNode: IXmlNode; const aIndex: Integer = -1): Integer;
-      procedure InternalDelete(const aIndex: Integer);
+      procedure InternalDelete(const aIndex: Integer; aNode: IXmlNode = NIL);
     public
       constructor Create(const aOwner: TXmlNode);
       function Add(const aNode: IXmlNode): Integer;
@@ -140,7 +140,7 @@ implementation
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlNode.get_AsAttribute: IXmlAttribute;
   begin
-    if NOT (fNodeType = xmlAttribute) then
+    if NOT (fNodeType in [xmlAttribute, xmlNamespace]) then
       raise EXmlNodeTypeException.Create('Xml node is not an attribute');
 
     result := self as IXmlAttribute;
@@ -175,18 +175,17 @@ implementation
   function TXmlNode.get_Index: Integer;
   var
     parent: IXmlElement;
+    hasNodes: IXmlHasNodes;
   begin
     result := -1;
 
     case NodeType of
       xmlAttribute,
       xmlNamespace  : if InterfaceCast(fParent, IXmlElement, parent) then
-//                      if fParent.Supports(IXmlElement, parent) then
-                        result := parent.Attributes.IndexOf(self as IXmlAttribute);
+                        result := parent.Attributes.IndexOf(self);
     else
-      if InterfaceCast(fParent, IXmlElement, parent) then
-//      if fParent.Supports(IXmlElement, parent) then
-        result := parent.Nodes.IndexOf(self);
+      if InterfaceCast(fParent, IXmlHasNodes, hasNodes) then
+        result := hasNodes.Nodes.IndexOf(self);
     end;
   end;
 
@@ -527,14 +526,14 @@ implementation
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlNodeList.Delete(const aIndex: Integer);
   begin
-    inherited Delete(aIndex);
+    InternalDelete(aIndex);
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlNodeList.Delete(const aNode: IXmlNode);
   begin
-    inherited Delete(IndexOf(aNode));
+    InternalDelete(IndexOf(aNode), aNode);
   end;
 
 
@@ -613,21 +612,21 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  procedure TXmlNodeList.InternalDelete(const aIndex: Integer);
+  procedure TXmlNodeList.InternalDelete(const aIndex: Integer; aNode: IXmlNode);
   var
-    nodeRef: IXmlNode;
     node: TXmlNode;
   begin
     if (aIndex < 0) or (aIndex >= Count) then
       EXIT;
 
+    // If not provided, get an intf ref to the node being deleted to ensure
+    //  to that it is not destroyed before the owner has been notified
+    if NOT Assigned(aNode) then
+      aNode := Items[aIndex];
+
     inherited Delete(aIndex);
 
-    // Ensure there is at least one intf ref to the node after it has been deleted
-    //  to ensure it is not destroyed before the owner has been notified
-    nodeRef := Items[aIndex];
-
-    InterfaceCast(nodeRef, TXmlNode, node);
+    InterfaceCast(aNode, TXmlNode, node);
 
     fOwner.NodeDeleted(node);
   end;

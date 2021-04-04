@@ -49,6 +49,7 @@ implementation
 
   uses
     SysUtils,
+    Deltics.Xml.Nodes.Document,
     Deltics.Xml.Reader;
 
 
@@ -103,7 +104,12 @@ implementation
       else
         warnings := NIL;
 
-      doc := LoadDocument(aStream, errors, warnings);
+      doc := fDocumentRef^;
+      if NOT Assigned(doc) then
+        doc := TXmlDocument.Create;
+
+      LoadDocument(doc, aStream, errors, warnings);
+
       fDocumentRef^ := doc;
 
     finally

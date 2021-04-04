@@ -7,8 +7,12 @@
 interface
 
   uses
-    Deltics.StringTypes;
+    Deltics.StringTypes,
+    Deltics.Xml.Interfaces,
+    Deltics.Xml.Nodes;
 
+
+  function AsObject(const aNodeList: IXmlNodeList): TXmlNodeList; overload; {$ifdef InlineMethodsSupported} inline; {$endif}
 
   function Concat(aStrings: array of Utf8String): Utf8String;
 
@@ -17,8 +21,14 @@ interface
 implementation
 
   uses
+    Deltics.InterfacedObjects,
     Deltics.Memory;
 
+
+  function AsObject(const aNodeList: IXmlNodeList): TXmlNodeList;
+  begin
+    InterfaceCast(aNodeList, TXmlNodeList, result);
+  end;
 
 
   function Concat(aStrings: array of Utf8String): Utf8String;

@@ -13,11 +13,11 @@ interface
 
 
   type
-    TXmlElement = class(TXmlNamespaceNode, IXmlElement)
+    TXmlElement = class(TXmlNamespaceNode, IXmlElement, IXmlHasNodes)
     protected // IXmlNode
       function get_Text: Utf8String; override;
 
-    protected // IXmlElement
+    protected // IXmlElement + IXmlHasNodes
       function get_Attributes: IXmlAttributeList;
       function get_IsEmpty: Boolean;
       function get_Namespaces: IXmlNamespaceList;
@@ -36,16 +36,16 @@ interface
     private
       fAttributes: IXmlAttributeList;
       fNodes: IXmlNodeList;
-      fIsEmpty: Boolean;
     protected
       function Accepts(const aNode: TXmlNode): Boolean; override;
       procedure Assign(const aSource: TXmlNode); override;
     public
-      constructor Create(const aName: Utf8String);
-      constructor CreateEmpty(const aName: Utf8String);
+      constructor Create(const aName: Utf8String); overload;
+      constructor Create(const aName: Utf8String; const aText: Utf8String); overload;
 //      function AllNamespaces: IXmlNamespaceSelection;
       property Attributes: IXmlAttributeList read fAttributes;
       property Nodes: IXmlNodeList read fNodes;
+      property Text: Utf8String read get_Text write set_Text;
     end;
 
 
@@ -76,13 +76,19 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  constructor TXmlElement.CreateEmpty(const aName: Utf8String);
+  constructor TXmlElement.Create(const aName: Utf8String;
+                                 const aText: Utf8String);
+  var
+    nodes: TXmlNodeList;
   begin
-    Create(aName);
+    inherited Create(xmlElement, aName);
 
-    fIsEmpty := TRUE;
+    nodes := TXmlNodeList.Create(self);
 
-    // TODO: Validation against doctype or scheme if present (when added to a document)
+    fAttributes := TXmlAttributeList.Create(self);
+    fNodes      := nodes;
+
+    nodes.Add(TXmlText.Create(aText));
   end;
 
 
@@ -100,15 +106,10 @@ implementation
   end;
 
 
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlElement.get_IsEmpty: Boolean;
   begin
-    result := fIsEmpty;
-
-    if NOT Assigned(Document) then
-      EXIT;
-
-    // TODO: When part of a document, override/determine result from doctype or
-    //        schema (if present)
+    result := (fNodes.Count = 0);
   end;
 
 
@@ -224,8 +225,13 @@ implementation
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlElement.set_IsEmpty(const aValue: Boolean);
   begin
-    // TODO: Clear children if setting TRUE
-    fIsEmpty := aValue;
+    case aValue of
+      FALSE : if (fNodes.Count = 0) then
+                Text := '';
+
+      TRUE  : if (fNodes.Count > 0) then
+                AsObject(fNodes).Clear;
+    end;
   end;
 
 
@@ -234,8 +240,15 @@ implementation
   var
     i: Integer;
     list: TXmlNodeList;
+    existing: IXmlText;
   begin
     InterfaceCast(fNodes, TXmlNodeList, list);
+
+    if (list.Count = 1) and InterfaceCast(list[0], IXmlText, existing) then
+    begin
+      existing.Text := aValue;
+      EXIT;
+    end;
 
     for i := Pred(list.Count) downto 0 do
       if list[i].NodeType in [xmlElement, xmlText] then

@@ -14,11 +14,11 @@ interface
 
 
   type
-    TXmlFragment = class(TXmlNode, IXmlFragment)
+    TXmlFragment = class(TXmlNode, IXmlFragment, IXmlHasNodes)
     protected // IXmlNode
       function get_Name: Utf8String; override;
 
-    protected // IXmlFragment
+    protected // IXmlFragment + IXmlHasNodes
       function get_Nodes: IXmlNodeList;
     public
       procedure Add(const aNode: IXmlNode);

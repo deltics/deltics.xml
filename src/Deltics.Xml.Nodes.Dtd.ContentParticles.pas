@@ -49,7 +49,10 @@ interface
 
 
 
-    TXmlDtdContentParticleList = class(TXmlDtdContentParticle, IXmlDtdContentParticleList)
+    TXmlDtdContentParticleList = class(TXmlDtdContentParticle, IXmlDtdContentParticleList, IXmlHasNodes)
+    protected // IXmlHasNodes
+      function get_Nodes: IXmlNodeList;
+
     protected // IXmlNode
       function get_Name: Utf8String; override;
 
@@ -258,6 +261,14 @@ implementation
   begin
     result := '#dtd-content-particle-list';
   end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlDtdContentParticleList.get_Nodes: IXmlNodeList;
+  begin
+    result := fItems;
+  end;
+
 
 
 

@@ -44,7 +44,7 @@ interface
       function ReadDtdNotation: IXmlDtdNotation;
       procedure UnexpectedNode(const aNode: IXmlNode);
     public
-      function LoadDocument(const aStream: TStream; const aErrors: IStringList; const aWarnings: IStringList): IXmlDocument;
+      class procedure LoadDocument(const aDocument: IXmlDocument; const aStream: TStream; const aErrors: IStringList; const aWarnings: IStringList);
       function LoadFragment(const aStream: TStream; const aErrors: IStringList; const aWarnings: IStringList): IXmlFragment;
     end;
 
@@ -134,55 +134,62 @@ implementation
 { TXmlReader }
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlReader.LoadDocument(const aStream: TStream;
-                                   const aErrors: IStringList;
-                                   const aWarnings: IStringList): IXmlDocument;
+  class procedure TXmlReader.LoadDocument(const aDocument: IXmlDocument;
+                                          const aStream: TStream;
+                                          const aErrors: IStringList;
+                                          const aWarnings: IStringList);
   var
+    doc: TXmlDocument;
     node: IXmlNode;
     nodes: TXmlNodeList;
+    reader: TXmlReader;
   begin
   {$ifdef profile_XmlReader} profiler.Start('LoadDocument'); try {$endif}
 
-    result := TXmlDocument.Create;
+    InterfaceCast(aDocument, TXmlDocument, doc);
 
-    InterfaceCast(result.Nodes, TXmlNodeList, nodes);
+    doc.Reset;
 
-    fParser := TXmlParser.Create(aStream, aErrors, aWarnings);
+    InterfaceCast(aDocument.Nodes, TXmlNodeList, nodes);
+
+    reader := TXmlReader.Create;
+
+    reader.fParser := TXmlParser.Create(aStream, aErrors, aWarnings);
     try
       try
-        while NOT fParser.EOF do
+        while NOT reader.fParser.EOF do
         begin
-          node := ReadNode;
+          node := reader.ReadNode;
           if NOT Assigned(node) then
             BREAK;
 
           case node.NodeType of
             xmlDocType  : begin
-                            if Assigned(result.DocType) then
+                            if Assigned(aDocument.DocType) then
                             begin
-                              fParser.Error('An Xml document may only have one !DOCTYPE declaration or reference');
+                              reader.fParser.Error('An Xml document may only have one !DOCTYPE declaration or reference');
                               EXIT;
                             end;
 
-                            result.DocType  := node as IXmlDocType;
+                            aDocument.DocType  := node as IXmlDocType;
                           end;
 
             xmlElement  : begin
-                            if Assigned(result.RootElement) then
+                            if Assigned(aDocument.RootElement) then
                             begin
-                              fParser.Error('An Xml document may only have one root node' {, '2.1.[1].1', 'http://www.w3.org/TR/REC-Xml/#NT-document'});
+                              reader.fParser.Error('An Xml document may only have one root node' {, '2.1.[1].1', 'http://www.w3.org/TR/REC-Xml/#NT-document'});
                               EXIT;
                             end;
 
-                            result.RootElement := node as IXmlElement;
+                            aDocument.RootElement := node as IXmlElement;
                           end;
           else
             nodes.Add(node);
           end;
         end;
 
-        if NOT Assigned(result.RootElement) then
-          fParser.Error('No root node');
+        if NOT Assigned(aDocument.RootElement) then
+          reader.fParser.Error('No root node');
 
       except
 //        on EAbort do ;
@@ -191,12 +198,12 @@ implementation
 
         on e: Exception do
         begin
-          fParser.Error('Exception: ' + e.ClassName + ', ' + e.Message);
+          reader.fParser.Error('Exception: ' + e.ClassName + ', ' + e.Message);
         end;
       end;
 
     finally
-      fParser := NIL;
+      reader.Free;
     end;
 
   {$ifdef profile_XmlReader} finally profiler.Finish end; {$endif}
@@ -337,7 +344,7 @@ implementation
   {$ifdef profile_XmlReader} profiler.Start('ReadElement'); try {$endif}
 
     name    := fParser.ReadName;
-    result  := TXmlElement.CreateEmpty(name);
+    result  := TXmlElement.Create(name);
 
     while NOT fParser.EOF do
     begin
@@ -349,8 +356,6 @@ implementation
               end;
 
         '>' : begin
-                result.IsEmpty := FALSE;
-
                 while NOT fParser.EOF do
                 begin
                   child := ReadNode;
