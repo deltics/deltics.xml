@@ -35,6 +35,8 @@ interface
 
     TXmlElementSelection = class(TXmlNodeSelection, IXmlElementSelection)
     protected
+      function get_First: IXmlElement;
+      function get_Last: IXmlElement;
       function get_Item(const aIndex: Integer): IXmlElement; overload;
     public
       constructor Create(const aElement: IXmlElement); overload;
@@ -46,6 +48,8 @@ interface
 
     TXmlNamespaceSelection = class(TXmlNodeSelection, IXmlNamespaceSelection)
     protected
+      function get_First: IXmlNamespace;
+      function get_Last: IXmlNamespace;
       function get_Item(const aIndex: Integer): IXmlNamespace; overload;
     public
       constructor Create(const aNodes: IXmlNodeList);
@@ -161,9 +165,29 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlElementSelection.get_First: IXmlElement;
+  begin
+    if Count > 0 then
+      result := Items[0]
+    else
+      result := NIL;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlElementSelection.get_Item(const aIndex: Integer): IXmlElement;
   begin
     result := inherited Items[aIndex] as IXmlElement;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlElementSelection.get_Last: IXmlElement;
+  begin
+    if Count > 0 then
+      result := Items[Count - 1]
+    else
+      result := NIL;
   end;
 
 
@@ -205,9 +229,29 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlNamespaceSelection.get_First: IXmlNamespace;
+  begin
+    if Count > 0 then
+      result := Items[0]
+    else
+      result := NIL;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlNamespaceSelection.get_Item(const aIndex: Integer): IXmlNamespace;
   begin
     result := inherited Items[aIndex] as IXmlNamespace;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlNamespaceSelection.get_Last: IXmlNamespace;
+  begin
+    if Count > 0 then
+      result := Items[Count - 1]
+    else
+      result := NIL;
   end;
 
 
