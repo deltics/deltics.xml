@@ -17,10 +17,12 @@ implementation
   function Sample(const aSampleName: String): String;
   begin
   {$ifdef _CICD}
-    result := Path.RelativeToAbsolute('.\samples\' + aSampleName + '.xml');
+    // CI/CD tests are executed from the repo root
+    result := '.\tests\samples';
   {$else}
-    result := 'X:\dev\src\delphi\libs\congress\deltics.xml\tests\samples\' + aSampleName + '.xml';
+    result := '..\..\samples';
   {$endif}
+    result := Path.Absolute(Path.Append(result, aSampleName + '.xml'));
   end;
 
 
