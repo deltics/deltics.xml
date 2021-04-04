@@ -25,9 +25,10 @@ interface
       function get_Nodes: IXmlNodeList;
       function get_Prolog: IXmlProlog;
       function get_RootElement: IXmlElement;
-      function get_Standalone: NullableBooleanProp;
+      function get_Standalone: Utf8String;
       procedure set_DocType(const aValue: IXmlDocType);
       procedure set_RootElement(const aValue: IXmlElement);
+      procedure set_Standalone(const aValue: Utf8String);
 //      procedure Add(const aNode: IXmlNode);
       procedure SaveToFile(const aFilename: String; const aEncoding: TEncoding);
       procedure SaveToStream(const aStream: TStream; const aEncoding: TEncoding);
@@ -37,7 +38,7 @@ interface
       fNodes: IXmlNodeList;
       fProlog: IXmlProlog;
       fRootElement: IXmlElement;
-      fStandalone: NullableBoolean;
+      fStandalone: Utf8String;
     protected
       function Accepts(const aNode: TXmlNode): Boolean; override;
       procedure Assign(const aSource: TXmlNode); overload; override;
@@ -80,7 +81,7 @@ implementation
 
     fNodes := TXmlNodeList.Create(self);
 
-    fStandalone.Clear;
+    fStandalone := '';
   end;
 
 
@@ -120,13 +121,9 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  function TXmlDocument.get_Standalone: NullableBooleanProp;
+  function TXmlDocument.get_Standalone: Utf8String;
   begin
-  {$ifNdef Generics}
-    result := @fStandalone;
-  {$else}
     result := fStandalone;
-  {$endif}
   end;
 
 
@@ -245,6 +242,16 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  procedure TXmlDocument.set_Standalone(const aValue: Utf8String);
+  begin
+    if (aValue = 'yes') or (aValue = 'no') then
+      fStandalone := aValue
+    else
+      fStandalone := '';
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlDocument.Accepts(const aNode: TXmlNode): Boolean;
   var
     nodeTypes: set of TXmlNodeType;
@@ -264,12 +271,15 @@ implementation
   end;
 
 
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlDocument.Assign(const aSource: TXmlNode);
   var
     src: TXmlDocument absolute aSource;
     nodes: TXmlNodeList;
   begin
     inherited;
+
+    fStandalone := src.fStandalone;
 
     InterfaceCast(fNodes, TXmlNodeList, nodes);
     nodes.Assign(src.Nodes);

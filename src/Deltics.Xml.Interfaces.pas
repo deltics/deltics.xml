@@ -98,21 +98,23 @@ interface
     end;
 
 
+(*
   {$ifdef Generics}
     NullableBooleanProp = NullableBoolean;
   {$else}
     NullableBooleanProp = ^NullableBoolean;
   {$endif}
-
+*)
     IXmlDocument = interface(IXmlNode)
     ['{677EBA8B-54C0-434B-BD91-E7AFEE0CAB3B}']
       function get_DocType: IXmlDocType;
       function get_Nodes: IXmlNodeList;
       function get_Prolog: IXmlProlog;
       function get_RootElement: IXmlElement;
-      function get_Standalone: NullableBooleanProp;
+      function get_Standalone: Utf8String;
       procedure set_DocType(const aValue: IXmlDocType);
       procedure set_RootElement(const aValue: IXmlElement);
+      procedure set_Standalone(const aValue: Utf8String);
 
       procedure SaveToFile(const aFilename: String; const aEncoding: TEncoding);
       procedure SaveToStream(const aStream: TStream; const aEncoding: TEncoding);
@@ -121,7 +123,7 @@ interface
       property Nodes: IXmlNodeList read get_Nodes;
       property Prolog: IXmlProlog read get_Prolog;
       property RootElement: IXmlElement read get_RootElement write set_RootElement;
-      property Standalone: NullableBooleanProp read get_Standalone;
+      property Standalone: Utf8String read get_Standalone write set_Standalone;
     end;
 
 

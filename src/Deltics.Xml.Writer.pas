@@ -42,7 +42,7 @@ interface
       procedure WriteNode(const aNode: IXmlNode);
       procedure WriteNodes(const aNodeList: IXmlNodeList);
       procedure WriteProcessingInstruction(const aProcessingInstruction: IXmlProcessingInstruction);
-      procedure WriteProlog(const aStandalone: NullableBooleanProp);
+      procedure WriteProlog(const aStandalone: Utf8String);
 //      function ReadText: IXmlText;
 //      function ReadDtdAttList: IXmlDtdAttListDeclaration;
 //      function ReadDtdContentParticles: IXmlDtdContentParticleList;
@@ -304,10 +304,9 @@ implementation
 
 
 
-  procedure TXmlWriter.WriteProlog(const aStandalone: NullableBooleanProp);
+  procedure TXmlWriter.WriteProlog(const aStandalone: Utf8String);
   var
     encoding: Utf8String;
-    standalone: Utf8String;
   begin
     case fEncoding.Codepage of
       cpUtf8    : encoding := 'UTF-8';
@@ -315,17 +314,10 @@ implementation
       cpUtf16LE : encoding := 'UTF-16LE';
     end;
 
-    if NOT aStandalone.IsNull then
-    begin
-      if aStandalone.Value then
-        standalone := 'yes'
-      else
-        standalone := 'no';
-
-      WriteLine(Concat(['<?xml version="1.0" encoding="', encoding, '" standalone="', standalone, '"?>']))
-    end
+    if aStandalone <> '' then
+      WriteLine(Concat(['<?xml version="1.0" encoding="', encoding, '" standalone="', aStandalone, '"?>']))
     else
-      WriteLine(Concat(['<?xml version="1.0" encoding="', encoding, '"?>']))
+      WriteLine(Concat(['<?xml version="1.0" encoding="', encoding, '"?>']));
   end;
 
 
