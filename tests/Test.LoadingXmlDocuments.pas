@@ -35,7 +35,7 @@ implementation
   var
     note: IXmlElement;
   begin
-    Xml.Load(sut).FromFile(Sample('note'));
+    sut := TXmlDocument.CreateFromFile(Sample('note'));
 
     Test('Document').Assert(sut).IsAssigned;
     Test('Document.DocType').Assert(sut.DocType).IsNIL;
@@ -60,7 +60,7 @@ implementation
 
   procedure LoadingXmlDocuments.ElementWithChild;
   begin
-    Xml.Load(sut).FromString('<root><child /></root>');
+    Xml.Load(sut).FromUtf8('<root><child /></root>');
 
     Test('Nodes.Count').Assert(sut.Nodes.Count).Equals(1);
 
@@ -76,7 +76,7 @@ implementation
 
   procedure LoadingXmlDocuments.EmptyElement;
   begin
-    Xml.Load(sut).FromString('<root />');
+    Xml.Load(sut).FromUtf8('<root />');
 
     Test('Nodes.Count').Assert(sut.Nodes.Count).Equals(1);
     Test('RootElement').Assert(sut.RootElement).IsAssigned;
@@ -87,7 +87,7 @@ implementation
 
   procedure LoadingXmlDocuments.EmptyElementWithAttributes;
   begin
-    Xml.Load(sut).FromString('<root attr1="first" attr2="second" />');
+    Xml.Load(sut).FromUtf8('<root attr1="first" attr2="second" />');
 
     Test('Nodes.Count').Assert(sut.Nodes.Count).Equals(1);
 
@@ -95,7 +95,9 @@ implementation
     Test('RootElement.IsEmpty').Assert(sut.RootElement.IsEmpty).IsTrue;
     Test('RootElement.Name').Assertutf8(sut.RootElement.Name).Equals('root');
 
-    Test('RootElement.Attributes.Count').Assert(sut.RootElement.Attributes.Count).Equals(2);
+    if NOT Test('RootElement.Attributes.Count').Assert(sut.RootElement.Attributes.Count).Equals(2).Passed then
+      EXIT;
+
     Test('RootElement.Attributes[0].Name').AssertUtf8(sut.RootElement.Attributes[0].Name).Equals('attr1');
     Test('RootElement.Attributes[0].Value').AssertUtf8(sut.RootElement.Attributes[0].Value).Equals('first');
     Test('RootElement.Attributes[1].Name').AssertUtf8(sut.RootElement.Attributes[1].Name).Equals('attr2');

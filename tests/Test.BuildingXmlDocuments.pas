@@ -28,7 +28,7 @@ implementation
   var
     doc: IXmlDocument;
   begin
-    doc := XmlDocument.New;
+    doc := Xml.Document;
 
     Test('Document.DocType').Assert(doc.DocType).IsNIL;
     Test('Document.RootElement').Assert(doc.RootElement).IsNIL;
@@ -45,8 +45,8 @@ implementation
     doc: IXmlDocument;
     element: IXmlElement;
   begin
-    doc     := XmlDocument.New;
-    element := XmlElement.Create('project');
+    doc     := Xml.Document;
+    element := Xml.Element('project');
 
     doc.RootElement := element;
 
@@ -54,10 +54,12 @@ implementation
 
     Test('Document.RootElement').Assert(doc.RootElement).IsAssigned;
     Test('Document.RootElement').Assert(doc.RootElement).Equals(element);
-    Test('Document.RootElement.Name').Assertutf8(doc.RootElement.Name).Equals('project');
+    Test('Document.RootElement.Name').AssertUtf8(doc.RootElement.Name).Equals('project');
+    Test('Document.RootElement.IsEmpty').Assert(doc.RootElement.IsEmpty).IsTrue;
 
     Test('Element.Parent').Assert(element.Parent).IsAssigned;
     Test('Element.Parent').Assert(element.Parent).Equals(doc);
+    Test('Element.Document').Assert(element.Document).Equals(doc);
   end;
 
 

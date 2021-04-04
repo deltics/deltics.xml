@@ -1,4 +1,5 @@
 
+{$i deltics.smoketest.inc}
 
   unit Samples;
 
@@ -20,7 +21,11 @@ implementation
     // CI/CD tests are executed from the repo root
     result := '.\tests\samples';
   {$else}
-    result := '..\..\samples';
+    {$ifdef __DELPHI2007}
+      result := '.\samples';
+    {$else}
+      result := '..\..\samples';
+    {$endif}
   {$endif}
     result := Path.Absolute(Path.Append(result, aSampleName + '.xml'));
   end;
