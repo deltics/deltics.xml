@@ -25,6 +25,8 @@ interface
     protected // IXmlFormatter
       function AsUnicodeString: UnicodeString;
       function AsUtf8String: Utf8String;
+      procedure IntoStream(const aStream: IStream; const aEncoding: TEncoding = NIL); overload;
+      procedure IntoStream(const aStream: TStream; const aEncoding: TEncoding = NIL); overload;
       function LineEndings(const aValue: TXmlLineEndings): IXmlFormatter;
       function Prolog(const aValue: Boolean): IXmlFormatter;
       function Readable(const aValue: Boolean): IXmlFormatter;
@@ -107,6 +109,7 @@ implementation
 
       stream := TDynamicMemoryStream.Create;
       writer.SaveDocument(fRootNode as IXmlDocument, stream.Stream);
+
     finally
       writer.Free;
     end;
@@ -121,6 +124,33 @@ implementation
   begin
     fErrorsRef  := @aList;
     result      := self;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  procedure TXmlFormatter.IntoStream(const aStream: IStream; const aEncoding: TEncoding);
+  begin
+    IntoStream(aStream.Stream, aEncoding);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  procedure TXmlFormatter.IntoStream(const aStream: TStream; const aEncoding: TEncoding);
+  var
+    writer: TXmlWriter;
+  begin
+    writer := TXmlWriter.Create;
+    try
+      writer.DocumentProlog := fProlog;
+      writer.Encoding       := aEncoding;
+      writer.Readable       := fIndent > -1;
+      writer.ReadableIndent := fIndent;
+
+      writer.SaveDocument(fRootNode as IXmlDocument, aStream);
+
+    finally
+      writer.Free;
+    end;
   end;
 
 
