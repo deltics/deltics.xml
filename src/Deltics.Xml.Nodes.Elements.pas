@@ -35,6 +35,8 @@ interface
       function HasAttribute(const aName: Utf8String): Boolean; overload;
       function HasAttribute(const aName: Utf8String; var aValue: Utf8String): Boolean; overload;
 //      function AllNamespaces: IXmlNamespaceSelection;
+      function Insert(const aNode: IXmlAttribute): IXmlAttributeInsertion; overload;
+      function Insert(const aNode: IXmlNode): IXmlNodeInsertion; overload;
 
     private
       fAttributes: IXmlAttributeList;
@@ -42,6 +44,7 @@ interface
     protected
       function Accepts(const aNode: TXmlNode): Boolean; override;
       procedure Assign(const aSource: TXmlNode); override;
+      procedure DeleteNode(const aNode: IXmlNode); override;
     public
       constructor Create(const aName: Utf8String); overload;
       constructor Create(const aName: Utf8String; const aText: Utf8String); overload;
@@ -59,6 +62,7 @@ implementation
     Deltics.Exceptions,
     Deltics.InterfacedObjects,
     Deltics.Strings,
+    Deltics.Xml.Insertion,
     Deltics.Xml.Nodes.Attributes,
     Deltics.Xml.Nodes.Attributes.Namespaces,
     Deltics.Xml.Nodes.Text,
@@ -92,6 +96,18 @@ implementation
     fNodes      := nodes;
 
     nodes.Add(TXmlText.Create(aText));
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  procedure TXmlElement.DeleteNode(const aNode: IXmlNode);
+  begin
+    case aNode.NodeType of
+      xmlAttribute,
+      xmlNamespace  : AsObject(fAttributes).Delete(aNode);
+    else
+      AsObject(fNodes).Delete(aNode);
+    end;
   end;
 
 
@@ -191,6 +207,20 @@ implementation
     result := Attributes.Contains(aName, attr);
     if result then
       aValue := attr.Value;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlElement.Insert(const aNode: IXmlAttribute): IXmlAttributeInsertion;
+  begin
+    result := TXmlNodeInsertion.Create(AsObject(fAttributes), aNode);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlElement.Insert(const aNode: IXmlNode): IXmlNodeInsertion;
+  begin
+    result := TXmlNodeInsertion.Create(AsObject(fNodes), aNode);
   end;
 
 
@@ -327,27 +357,24 @@ implementation
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlElement.Add(const aNode: IXmlNode): Integer;
   var
-    dest: IXmlNodeList;
-    node: TXmlNode;
     nodes: TXmlNodeList;
+    node: TXmlNode;
   begin
     InterfaceCast(aNode, TXmlNode, node);
 
     case node.NodeType of
       xmlAttribute,
-      xmlNamespace              : dest := fAttributes;
+      xmlNamespace              : nodes := AsObject(fAttributes);
 
       xmlElement,
       xmlText,
       xmlComment,
       xmlProcessingInstruction,
       xmlCDATA,
-      xmlEntityReference        : dest := fNodes;
+      xmlEntityReference        : nodes := AsObject(fNodes);
     else
-      raise Exception.Create('');
+      raise Exception.Create('Cannot add nodes of this type to an element');
     end;
-
-    InterfaceCast(dest, TXmlNodeList, nodes);
 
     result := nodes.Add(aNode);
   end;
@@ -384,8 +411,8 @@ implementation
   begin
     inherited;
 
-    TXmlNodeList.Assign(src.Attributes, fAttributes);
-    TXmlNodeList.Assign(src.Nodes, fNodes);
+    TXmlNodeList.Assign(fAttributes, src.Attributes);
+    TXmlNodeList.Assign(fNodes, src.Nodes);
   end;
 
 

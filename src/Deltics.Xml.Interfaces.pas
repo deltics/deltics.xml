@@ -25,6 +25,7 @@ interface
 
 
     IXmlAttribute               = interface;
+    IXmlAttributeInsertion      = interface;
     IXmlAttributeList           = interface;
     IXmlDocType                 = interface;
     IXmlDocument                = interface;
@@ -43,6 +44,7 @@ interface
     IXmlNamespaceList           = interface;
     IXmlNamespaceNode           = interface;
     IXmlNode                    = interface;
+    IXmlNodeInsertion           = interface;
     IXmlNodeList                = interface;
     IXmlNodeSelection           = interface;
     IXmlProlog                  = interface;
@@ -266,6 +268,8 @@ interface
       function HasAttribute(const aName: Utf8String): Boolean; overload;
       function HasAttribute(const aName: Utf8String; var aValue: Utf8String): Boolean; overload;
 //      function AllNamespaces: IXmlNamespaceSelection;
+      function Insert(const aNode: IXmlAttribute): IXmlAttributeInsertion; overload;
+      function Insert(const aNode: IXmlNode): IXmlNodeInsertion; overload;
 
       property Attributes: IXmlAttributeList read get_Attributes;
       property Nodes: IXmlNodeList read get_Nodes;
@@ -373,12 +377,15 @@ interface
 
 
 
-
-
     IXmlNodeList = interface
     ['{8A9093E3-D061-464D-8BD6-7B06A2A86426}']
       function get_Count: Integer;
       function get_Item(const aIndex: Integer): IXmlNode;
+      function Contains(const aName: Utf8String): Boolean; overload;
+      function Contains(const aName: Utf8String; var aIndex: Integer): Boolean; overload;
+      function Contains(const aName: Utf8String; var aNode: IXmlNode): Boolean; overload;
+      function Contains(const aNode: IXmlNode): Boolean; overload;
+      function Contains(const aNode: IXmlNode; var aIndex: Integer): Boolean; overload;
       function IndexOf(const aNode: IXmlNode): Integer;
       function ItemByName(const aName: Utf8String): IXmlNode;
       property Count: Integer read get_Count;
@@ -390,9 +397,11 @@ interface
     ['{971C97D6-02BD-4CDF-8948-026ADC0C2204}']
       function get_Item(const aIndex: Integer): IXmlAttribute; overload;
       function Contains(const aName: Utf8String; var aAttribute: IXmlAttribute): Boolean; overload;
+      function Contains(const aName: Utf8String; var aIndex: Integer): Boolean; overload;
       function Contains(const aName: Utf8String; var aValue: Utf8String): Boolean; overload;
-      procedure Delete(const aItem: IXmlAttribute);
       function IndexOf(const aItem: IXmlAttribute): Integer; overload;
+      function ItemByName(const aName: Utf8String): IXmlAttribute; overload;
+
       property Items[const aIndex: Integer]: IXmlAttribute read get_Item; default;
     end;
 
@@ -401,6 +410,31 @@ interface
     ['{D0610B6D-FC00-471D-9F67-91A9EE5994D9}']
       function get_Item(const aIndex: Integer): IXmlNamespace;
       property Items[const aIndex: Integer]: IXmlNamespace read get_Item; default;
+    end;
+
+
+
+
+
+
+
+    IXmlNodeInsertion = interface
+    ['{52604314-7995-40D9-8CE0-F6942B74FA6C}']
+      function After(const aNode: IXmlNode): Integer;
+      function AtIndex(const aIndex: Integer): Integer;
+      procedure AsFirst;
+      function AsLast: Integer;
+      function Before(const aNode: IXmlNode): Integer;
+      function Replacing(const aIndex: Integer): Integer; overload;
+      function Replacing(const aNode: IXmlNode): Integer; overload;
+    end;
+
+
+    IXmlAttributeInsertion = interface(IXmlNodeInsertion)
+    ['{DD389DF9-6E27-4631-8606-7CEB0E8A73A5}']
+      function After(const aItem: IXmlAttribute): Integer;
+      function Before(const aItem: IXmlAttribute): Integer;
+      function Replacing(const aItem: IXmlAttribute): Integer;
     end;
 
 

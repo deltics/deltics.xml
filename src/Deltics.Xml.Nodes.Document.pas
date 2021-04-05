@@ -78,6 +78,7 @@ implementation
     Deltics.Xml.Nodes.DocType,
     Deltics.Xml.Reader,
     Deltics.Xml.Types,
+    Deltics.Xml.Utils,
     Deltics.Xml.Writer;
 
 
@@ -400,12 +401,8 @@ implementation
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlDocument.DeleteNode(const aNode: IXmlNode);
-  var
-    nodes: TXmlNodeList;
   begin
-    InterfaceCast(fNodes, TXmlNodeList, nodes);
-
-    nodes.Delete(aNode);
+    AsObject(fNodes).Delete(aNode);
   end;
 
 

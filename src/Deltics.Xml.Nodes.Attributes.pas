@@ -40,18 +40,24 @@ interface
     protected // IXmlAttributeList
       function get_Item(const aIndex: Integer): IXmlAttribute; overload;
       function Contains(const aName: Utf8String; var aAttribute: IXmlAttribute): Boolean; overload;
+      function Contains(const aName: Utf8String; var aIndex: Integer): Boolean; overload;
       function Contains(const aName: Utf8String; var aValue: Utf8String): Boolean; overload;
     public
-      procedure Delete(const aItem: IXmlAttribute);
+      procedure Delete(const aItem: IXmlAttribute); overload;
       function IndexOf(const aItem: IXmlAttribute): Integer; overload;
+      function ItemByName(const aName: Utf8String): IXmlAttribute; overload;
+
+      property Items[const aIndex: Integer]: IXmlAttribute read get_Item;
 
     public
-      property Count: Integer read get_Count;
-      property Items[const aIndex: Integer]: IXmlAttribute read get_Item;
+      procedure Assign(const aSource: IXmlAttributeList); overload;
     end;
 
 
 implementation
+
+  uses
+    Deltics.Xml.Utils;
 
 
 { TXmlAttribute ---------------------------------------------------------------------------------- }
@@ -144,7 +150,7 @@ implementation
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlAttributeList.Contains(const aName: Utf8String;
-                                      var aAttribute: IXmlAttribute): Boolean;
+                                      var   aAttribute: IXmlAttribute): Boolean;
   var
     i: Integer;
   begin
@@ -165,7 +171,35 @@ implementation
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlAttributeList.Contains(const aName: Utf8String;
-                                      var aValue: Utf8String): Boolean;
+                                      var   aIndex: Integer): Boolean;
+  var
+    i: Integer;
+  begin
+    result  := FALSE;
+    aIndex  := -1;
+
+    for i := 0 to Pred(Count) do
+    begin
+      if Nodes[i].Name = aName then
+      begin
+        aIndex := i;
+        result := TRUE;
+        EXIT;
+      end;
+    end;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  procedure TXmlAttributeList.Assign(const aSource: IXmlAttributeList);
+  begin
+    Assign(AsObject(aSource));
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlAttributeList.Contains(const aName: Utf8String;
+                                      var   aValue: Utf8String): Boolean;
   var
     attr: IXmlAttribute;
   begin
@@ -178,7 +212,7 @@ implementation
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlAttributeList.Delete(const aItem: IXmlAttribute);
   begin
-
+    inherited Delete(aItem);
   end;
 
 
@@ -186,6 +220,13 @@ implementation
   function TXmlAttributeList.IndexOf(const aItem: IXmlAttribute): Integer;
   begin
     result := inherited IndexOf(aItem);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlAttributeList.ItemByName(const aName: Utf8String): IXmlAttribute;
+  begin
+    result := inherited ItemByName(aName) as IXmlAttribute;
   end;
 
 

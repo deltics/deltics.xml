@@ -9,10 +9,11 @@ interface
   uses
     Deltics.StringTypes,
     Deltics.Xml.Interfaces,
-    Deltics.Xml.Nodes;
+    Deltics.Xml.Nodes,
+    Deltics.Xml.Nodes.Attributes;
 
 
-  function AsObject(const aNodeList: IXmlNodeList): TXmlNodeList; overload; {$ifdef InlineMethodsSupported} inline; {$endif}
+  function AsObject(const aList: IXmlNodeList): TXmlNodeList; overload; {$ifdef pInlineMethodsSupported} inline; {$endif}
 
   function Concat(aStrings: array of Utf8String): Utf8String;
 
@@ -25,9 +26,9 @@ implementation
     Deltics.Memory;
 
 
-  function AsObject(const aNodeList: IXmlNodeList): TXmlNodeList;
+  function AsObject(const aList: IXmlNodeList): TXmlNodeList;
   begin
-    InterfaceCast(aNodeList, TXmlNodeList, result);
+    InterfaceCast(aList, TXmlNodeList, result);
   end;
 
 

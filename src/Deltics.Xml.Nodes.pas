@@ -38,13 +38,14 @@ interface
       fNodeType: TXmlNodeType;
       fParent: TXmlNode;
     protected
-      constructor Create(const aNodeType: TXmlNodeType);
       function Accepts(const aNode: TXmlNode): Boolean; virtual;
       procedure Assign(const aSource: TXmlNode); virtual;
-      procedure DeleteNode(const aNode: IXmlNode); virtual;
+      procedure DeleteNode(const aNode: IXmlNode); overload; virtual;
       procedure NodeAdded(const aNode: IXmlNode); virtual;
       procedure NodeDeleted(const aNode: IXmlNode); virtual;
     public
+      constructor Create(const aNodeType: TXmlNodeType);
+
       property Document: IXmlDocument read get_Document;
       property Name: Utf8String read get_Name;
       property NodeType: TXmlNodeType read fNodeType;
@@ -83,6 +84,12 @@ interface
     TXmlNodeList = class(TInterfacedObjectList, IXmlNodeList)
     protected // IXmlNodeList
       function get_Item(const aIndex: Integer): IXmlNode;
+    public
+      function Contains(const aName: Utf8String): Boolean; overload;
+      function Contains(const aName: Utf8String; var aIndex: Integer): Boolean; overload;
+      function Contains(const aName: Utf8String; var aNode: IXmlNode): Boolean; overload;
+      function Contains(const aNode: IXmlNode): Boolean; overload;
+      function Contains(const aNode: IXmlNode; var aIndex: Integer): Boolean; overload;
       function IndexOf(const aNode: IXmlNode): Integer;
       function ItemByName(const aName: Utf8String): IXmlNode;
 
@@ -94,14 +101,15 @@ interface
       function InternalAdd(const aNode: IXmlNode; const aIndex: Integer = -1): Integer;
       procedure InternalDelete(const aIndex: Integer; aNode: IXmlNode = NIL);
     public
+      class procedure Assign(const aSource, aDest: IXmlNodeList); overload;
       constructor Create(const aOwner: TXmlNode);
       function Add(const aNode: IXmlNode): Integer;
-      class procedure Assign(const aSource: IXmlNodeList; const aDest: IXmlNodeList); overload;
       procedure Assign(const aSource: IXmlNodeList); overload;
       procedure Assign(const aSource: TXmlNodeList); overload;
       procedure Clear;
       procedure Delete(const aIndex: Integer); overload;
       procedure Delete(const aNode: IXmlNode); overload;
+      function Insert(const aIndex: Integer; const aNode: IXmlNode): Integer;
       property Count: Integer read get_Count;
       property Items[const aIndex: Integer]: IXmlNode read get_Item;
       property Nodes[const aIndex: Integer]: TXmlNode read get_Node; default;
@@ -458,14 +466,8 @@ implementation
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   class procedure TXmlNodeList.Assign(const aSource, aDest: IXmlNodeList);
-  var
-    dest: TXmlNodeList;
-    src: TXmlNodeList;
   begin
-    InterfaceCast(aSource, TXmlNodeList, src);
-    InterfaceCast(aDest, TXmlNodeList, dest);
-
-    dest.Assign(src);
+    AsObject(aDest).Assign(AsObject(aSource));
   end;
 
 
@@ -524,6 +526,85 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlNodeList.Contains(const aName: Utf8String;
+                                 var   aNode: IXmlNode): Boolean;
+  var
+    i: Integer;
+  begin
+    for i := 0 to Pred(Count) do
+    begin
+      aNode   := Items[i];
+      result  := (aNode.Name = aName);
+      if result then
+        EXIT;
+    end;
+
+    aNode   := NIL;
+    result  := FALSE;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlNodeList.Contains(const aName: Utf8String;
+                                 var   aIndex: Integer): Boolean;
+  var
+    i: Integer;
+  begin
+    for i := 0 to Pred(Count) do
+    begin
+      if (Items[i].Name = aName) then
+      begin
+        aIndex := i;
+        result := TRUE;
+        EXIT;
+      end;
+    end;
+
+    aIndex  := -1;
+    result  := FALSE;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlNodeList.Contains(const aName: Utf8String): Boolean;
+  var
+    notUsed: Integer;
+  begin
+    result := Contains(aName, notUsed);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlNodeList.Contains(const aNode: IXmlNode;
+                                 var   aIndex: Integer): Boolean;
+  var
+    i: Integer;
+  begin
+    for i := 0 to Pred(Count) do
+    begin
+      if (Items[i] = aNode) then
+      begin
+        aIndex := i;
+        result := TRUE;
+        EXIT;
+      end;
+    end;
+
+    aIndex  := -1;
+    result  := FALSE;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlNodeList.Contains(const aNode: IXmlNode): Boolean;
+  var
+    notUsed: Integer;
+  begin
+    result := Contains(aNode, notUsed);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   procedure TXmlNodeList.Delete(const aIndex: Integer);
   begin
     InternalDelete(aIndex);
@@ -555,6 +636,13 @@ implementation
   function TXmlNodeList.IndexOf(const aNode: IXmlNode): Integer;
   begin
     result := inherited IndexOf((aNode as IInterfacedObject).AsObject);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlNodeList.Insert(const aIndex: Integer; const aNode: IXmlNode): Integer;
+  begin
+    result := InternalAdd(aNode, aIndex);
   end;
 
 
