@@ -44,12 +44,15 @@ uses
   Test.LoadingXmlDocuments in 'Test.LoadingXmlDocuments.pas',
   Test.FormattingXml in 'Test.FormattingXml.pas',
   Test.XPath in 'Test.XPath.pas',
-  Test.DocumentEncoding in 'Test.DocumentEncoding.pas';
+  Test.DocumentEncoding in 'Test.DocumentEncoding.pas',
+  Deltics.Xml.Insertion in '..\src\Deltics.Xml.Insertion.pas',
+  Test.NodeInsertion in 'Test.NodeInsertion.pas';
 
 begin
   TestRun.Test(BuildingXmlDocuments);
   TestRun.Test(LoadingXmlDocuments);
   TestRun.Test(FormattingXml);
   TestRun.Test(DocumentEncoding);
+  TestRun.Test(NodeInsertion);
   TestRun.Test(XPath);
 end.
