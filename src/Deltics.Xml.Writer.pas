@@ -258,15 +258,15 @@ implementation
      or ((aElement.Nodes.Count = 1) and (aElement.Nodes[0].NodeType = xmlText)) then
     begin
       case Length(attrs) of
-        0 : if aElement.IsEmpty and (attrs = '') then
+        0 : if aElement.IsEmpty then
               s := Concat(['<', aElement.Name, '/>'])
             else
               s := Concat(['<', aElement.Name, '>', aElement.Text, '</', aElement.Name, '>']);
       else
         if aElement.IsEmpty then
-          s := Concat(['<', aElement.Name, ' ', attrs, '>', aElement.Text, '</', aElement.Name, '>'])
+          s := Concat(['<', aElement.Name, ' ', attrs, '/>'])
         else
-          s := Concat(['<', aElement.Name, ' ', attrs, '/>']);
+          s := Concat(['<', aElement.Name, ' ', attrs, '>', aElement.Text, '</', aElement.Name, '>']);
       end;
 
       WriteLine(s);
