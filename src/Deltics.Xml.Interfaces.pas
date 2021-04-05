@@ -38,6 +38,7 @@ interface
     IXmlDtdEntity               = interface;
     IXmlDtdNotation             = interface;
     IXmlElement                 = interface;
+    IXmlElementSelection        = interface;
     IXmlFpi                     = interface;
     IXmlHasNodes                = interface;
     IXmlNamespace               = interface;
@@ -95,6 +96,8 @@ interface
 
       function Clone: IXmlNode;
       procedure Delete;
+      function SelectElement(const aPath: Utf8String): IXmlElement;
+      function SelectElements(const aPath: Utf8String): IXmlElementSelection;
       function SelectNode(const aPath: Utf8String): IXmlNode;
       function SelectNodes(const aPath: Utf8String): IXmlNodeSelection;
 

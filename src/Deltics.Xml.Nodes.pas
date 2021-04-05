@@ -31,6 +31,7 @@ interface
       function SelectAttribute(const aPath: Utf8String): IXmlAttribute; overload;
       function SelectAttribute(const aElementPath: Utf8String; const aAttribute: Utf8String): IXmlAttribute; overload;
       function SelectElement(const aPath: Utf8String): IXmlElement;
+      function SelectElements(const aPath: Utf8String): IXmlElementSelection;
       function SelectNode(const aPath: Utf8String): IXmlNode;
       function SelectNodes(const aPath: Utf8String): IXmlNodeSelection;
 
@@ -334,6 +335,13 @@ implementation
       raise Exception.CreateFmt('''%s'' is not a valid element path', [aPath]);
 
     result := node as IXmlElement;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  function TXmlNode.SelectElements(const aPath: Utf8String): IXmlElementSelection;
+  begin
+    result := XPath.SelectElements(self, aPath);
   end;
 
 

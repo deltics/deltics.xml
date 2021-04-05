@@ -8,14 +8,19 @@ interface
 
   uses
     Deltics.StringTypes,
-    Deltics.Xml.Interfaces;
+    Deltics.Xml.Interfaces,
+    Deltics.Xml.Selections;
 
 
   type
     XPath = class
+    private
+      class function SelectNodes(const aContext: IXmlNode; const aPath: Utf8String; const aSelectionClass: TXmlNodeSelectionClass): IXmlNodeSelection; overload;
+    public
+      class function SelectElements(const aContext: IXmlNode; const aPath: Utf8String): IXmlElementSelection;
       class function SelectNode(const aContext: IXmlNode; const aPath: Utf8String): IXmlNode; overload;
       class function SelectNode(const aContext: IXmlNode; const aPath: Utf8String; var aNode: IXmlNode): Boolean; overload;
-      class function SelectNodes(const aContext: IXmlNode; const aPath: Utf8String): IXmlNodeSelection;
+      class function SelectNodes(const aContext: IXmlNode; const aPath: Utf8String): IXmlNodeSelection; overload;
     end;
 
 
@@ -27,9 +32,16 @@ implementation
     Deltics.StringLists,
     Deltics.Strings,
     Deltics.StringTemplates,
-    Deltics.Xml.Selections,
     Deltics.Xml.Types;
 
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  class function XPath.SelectElements(const aContext: IXmlNode;
+                                      const aPath: Utf8String): IXmlElementSelection;
+  begin
+    result := SelectNodes(aContext, aPath, TXmlElementSelection) as IXmlElementSelection;
+  end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
@@ -126,7 +138,9 @@ implementation
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
-  class function XPath.SelectNodes(const aContext: IXmlNode; const aPath: Utf8String): IXmlNodeSelection;
+  class function XPath.SelectNodes(const aContext: IXmlNode;
+                                   const aPath: Utf8String;
+                                   const aSelectionClass: TXmlNodeSelectionClass): IXmlNodeSelection;
   var
     i: Integer;
     query: Utf8String;
@@ -137,7 +151,7 @@ implementation
     root: Utf8String;
     subquery: Utf8String;
   begin
-    selection := TXmlNodeSelection.Create;
+    selection := aSelectionClass.Create;
     result    := selection;
 
     query := aPath;
@@ -173,6 +187,14 @@ implementation
     finally
       template.Free;
     end;
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  class function XPath.SelectNodes(const aContext: IXmlNode;
+                                   const aPath: Utf8String): IXmlNodeSelection;
+  begin
+    result := SelectNodes(aContext, aPath, TXmlNodeSelection);
   end;
 
 

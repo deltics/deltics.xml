@@ -13,6 +13,7 @@ interface
   type
     XPath = class(TTest)
       procedure SetupTest;
+      procedure SelectElementsSelectsAllChildren;
       procedure SelectNodeSelectsTheRootNode;
       procedure SelectNodeSelectsFirstChildOfMany;
       procedure SelectNodesSelectsAllChildren;
@@ -38,6 +39,17 @@ implementation
     Xml.Load(doc).FromFile(Sample('menu'));
   end;
 
+
+
+  procedure XPath.SelectElementsSelectsAllChildren;
+  var
+    sut: IXmlElementSelection;
+  begin
+    sut := doc.SelectElements('menu/item');
+
+    Test('result').Assert(sut).IsAssigned;
+    Test('result.Count').Assert(sut.Count).Equals(5);
+  end;
 
 
   procedure XPath.SelectNodeSelectsFirstChildOfMany;

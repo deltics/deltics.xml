@@ -13,11 +13,18 @@ interface
     Deltics.Xml.Interfaces;
 
   type
+    TXmlNodeSelection       = class;
+    TXmlElementSelection    = class;
+    TXmlNamespaceSelection  = class;
+    TXmlNodeSelectionClass  = class of TXmlNodeSelection;
+
+
+
     TXmlNodeSelection = class(TComInterfacedObject, IXmlNodeSelection)
     private
       fList: IInterfacedObjectList;
     public
-      constructor Create;
+      constructor Create; overload; virtual;
       procedure Add(const aNode: IXmlNode); overload;
       procedure Add(const aSelection: IXmlNodeSelection); overload;
       procedure Remove(const aNode: IXmlNode);
@@ -89,8 +96,8 @@ implementation
   begin
     result := NIL;
 
-    if fList.Count > 0 then
-      result := IXmlNode(fList[0]);
+    if Count > 0 then
+      result := Items[0];
   end;
 
 
@@ -99,15 +106,15 @@ implementation
   begin
     result := NIL;
 
-    if fList.Count > 0 then
-      result := IXmlNode(fList[fList.Count - 1]);
+    if Count > 0 then
+      result := Items[Count - 1];
   end;
 
 
   { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
   function TXmlNodeSelection.get_Item(const aIndex: Integer): IXmlNode;
   begin
-    result := IXmlNode(fList[aIndex]);
+    result := fList[aIndex] as IXmlNode;
   end;
 
 
