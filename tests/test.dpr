@@ -12,6 +12,7 @@ uses
   Deltics.Xml.Exceptions in '..\src\Deltics.Xml.Exceptions.pas',
   Deltics.Xml.Formatter in '..\src\Deltics.Xml.Formatter.pas',
   Deltics.Xml.Fpi in '..\src\Deltics.Xml.Fpi.pas',
+  Deltics.Xml.Insertion in '..\src\Deltics.Xml.Insertion.pas',
   Deltics.Xml.Interfaces in '..\src\Deltics.Xml.Interfaces.pas',
   Deltics.Xml.Loader in '..\src\Deltics.Xml.Loader.pas',
   Deltics.Xml.Parser in '..\src\Deltics.Xml.Parser.pas',
@@ -45,7 +46,6 @@ uses
   Test.FormattingXml in 'Test.FormattingXml.pas',
   Test.XPath in 'Test.XPath.pas',
   Test.DocumentEncoding in 'Test.DocumentEncoding.pas',
-  Deltics.Xml.Insertion in '..\src\Deltics.Xml.Insertion.pas',
   Test.NodeInsertion in 'Test.NodeInsertion.pas';
 
 begin
