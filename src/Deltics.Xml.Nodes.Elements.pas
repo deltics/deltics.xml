@@ -87,6 +87,7 @@ implementation
                                  const aText: Utf8String);
   var
     nodes: TXmlNodeList;
+    text: IXmlText;
   begin
     inherited Create(xmlElement, aName);
 
@@ -95,7 +96,8 @@ implementation
     fAttributes := TXmlAttributeList.Create(self);
     fNodes      := nodes;
 
-    nodes.Add(TXmlText.Create(aText));
+    text := TXmlText.Create(aText);
+    nodes.Add(text);
   end;
 
 
@@ -273,13 +275,13 @@ implementation
   var
     i: Integer;
     list: TXmlNodeList;
-    existing: IXmlText;
+    textNode: IXmlText;
   begin
     InterfaceCast(fNodes, TXmlNodeList, list);
 
-    if (list.Count = 1) and InterfaceCast(list[0], IXmlText, existing) then
+    if (list.Count = 1) and InterfaceCast(list[0], IXmlText, textNode) then
     begin
-      existing.Text := aValue;
+      textNode.Text := aValue;
       EXIT;
     end;
 
@@ -291,7 +293,8 @@ implementation
     //
     //   i.e.  Text := 'This text <b>is</b> made up of text <u>and</u> <i>elements</i>.';
 
-    list.Add(TXmlText.Create(aValue));
+    textNode := TXmlText.Create(aValue);
+    list.Add(textNode);
   end;
 
 

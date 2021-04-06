@@ -11,7 +11,8 @@ interface
     Deltics.Xml.Types,
     Deltics.Xml.Nodes.Attributes,
     Deltics.Xml.Nodes.Document,
-    Deltics.Xml.Nodes.Elements;
+    Deltics.Xml.Nodes.Elements,
+    Deltics.Xml.Nodes.Text;
 
 
   type
@@ -103,6 +104,7 @@ interface
     TXmlAttribute = Deltics.Xml.Nodes.Attributes.TXmlAttribute;
     TXmlDocument  = Deltics.Xml.Nodes.Document.TXmlDocument;
     TXmlElement   = Deltics.Xml.Nodes.Elements.TXmlElement;
+    TXmlText      = Deltics.Xml.Nodes.Text.TXmlText;
 
 
   // Utilities
@@ -116,6 +118,7 @@ interface
       class function Document: IXmlDocument;
       class function Element(const aName: Utf8String): IXmlElement; overload;
       class function Element(const aName: Utf8String; const aText: Utf8String): IXmlElement; overload;
+      class function Text(const aValue: Utf8String): IXmlText;
     end;
 
 
@@ -170,6 +173,11 @@ implementation
     result := TXmlLoader.Create(aDocument);
   end;
 
+
+  class function Xml.Text(const aValue: Utf8String): IXmlText;
+  begin
+    result := TXmlText.Create(aValue);
+  end;
 
 
 
