@@ -926,6 +926,7 @@ implementation
     content: IXmlDtdContentParticleList;
     content_: TXmlDtdContentParticleList;
     list: TXmlNodeList;
+    particle: IXmlDtdContentParticle;
   begin
   {$ifdef profile_XmlReader} profiler.Start('ReadDtdElement'); try {$endif}
 
@@ -969,7 +970,8 @@ implementation
               content_ := TXmlDtdContentParticleList.Create;
               InterfaceCast(content_.ItemList, TXmlNodeList, list);
               repeat
-                list.Add(TXmlDtdContentParticle.Create('%' + fParser.ReadStringUntil(';') + ';'));
+                particle := TXmlDtdContentParticle.Create('%' + fParser.ReadStringUntil(';') + ';');
+                list.Add(particle);
               until (fParser.PeekCharSkippingWhitespace <> '%');
 
               result := TXmlDtdElement.Create(name, content_);
