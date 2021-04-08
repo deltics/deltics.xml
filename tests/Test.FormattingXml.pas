@@ -12,6 +12,7 @@ interface
 
   type
     FormattingXml = class(TTest)
+      procedure CDATAElements;
       procedure ConcatResults;
       procedure ReadableStringWithNoProlog;
       procedure ReadableStringWithProlog;
@@ -30,6 +31,28 @@ implementation
 
 
 { FormattingXml }
+
+  procedure FormattingXml.CDATAElements;
+  const
+    EXPECTED : Utf8String = '<root>'#10
+                          + '  <![CDATA[The quick brown fox'#10
+                          + 'jumped over the lazy dog!]]>'#10
+                          + '</root>';
+  var
+    doc: IXmlDocument;
+    s: Utf8String;
+  begin
+    doc := Xml.Document;
+    doc.RootElement := Xml.Element('root');
+    doc.RootElement.Add(Xml.CDATA('The quick brown fox'#10'jumped over the lazy dog!'));
+
+    s := Xml.Format(doc)
+            .Prolog(FALSE)
+            .AsUtf8String;
+
+    Test('result').AssertUtf8(s).Equals(EXPECTED);
+  end;
+
 
   procedure FormattingXml.ConcatResults;
   var
