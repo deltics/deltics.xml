@@ -33,7 +33,7 @@ interface
       procedure Write(aString: Utf8String);
       procedure WriteIndent;
       procedure WriteLine(aString: Utf8String);
-//      function ReadCDATA: IXmlCDATA;
+      procedure WriteCDATA(const aCDATA: IXmlCDATA);
 //      function ReadComment: IXmlComment;
 //      function ReadDocType: IXmlDocType;
       procedure WriteDocument(const aDocument: IXmlDocument);
@@ -193,6 +193,12 @@ implementation
   end;
 
 
+  procedure TXmlWriter.WriteCDATA(const aCDATA: IXmlCDATA);
+  begin
+    WriteLine(Concat(['<![CDATA[', aCDATA.Text, ']]>']));
+  end;
+
+
   procedure TXmlWriter.WriteLine(aString: Utf8String);
   const
     UTF8_ENDING     : Utf8String = #13#10;
@@ -291,6 +297,7 @@ implementation
   procedure TXmlWriter.WriteNode(const aNode: IXmlNode);
   begin
     case aNode.NodeType of
+      xmlCDATA                  : WriteCDATA(aNode as IXmlCDATA);
       xmlDocument               : WriteNodes((aNode as IXmlDocument).Nodes);
       xmlElement                : WriteElement(aNode as IXmlElement);
       xmlProcessingInstruction  : WriteProcessingInstruction(aNode as IXmlProcessingInstruction);

@@ -10,6 +10,7 @@ interface
     Deltics.Xml.Interfaces,
     Deltics.Xml.Types,
     Deltics.Xml.Nodes.Attributes,
+    Deltics.Xml.Nodes.CDATA,
     Deltics.Xml.Nodes.Document,
     Deltics.Xml.Nodes.Elements,
     Deltics.Xml.Nodes.Text;
@@ -102,6 +103,7 @@ interface
   //  Xml factory methods where possible
   type
     TXmlAttribute = Deltics.Xml.Nodes.Attributes.TXmlAttribute;
+    TXmlCDATA     = Deltics.Xml.Nodes.CDATA.TXmlCDATA;
     TXmlDocument  = Deltics.Xml.Nodes.Document.TXmlDocument;
     TXmlElement   = Deltics.Xml.Nodes.Elements.TXmlElement;
     TXmlText      = Deltics.Xml.Nodes.Text.TXmlText;
@@ -115,6 +117,7 @@ interface
 
       // Factory methods
       class function Attribute(const aName: Utf8String; const aValue: Utf8String = ''): IXmlAttribute;
+      class function CDATA(const aText: Utf8String): IXmlCDATA;
       class function Document: IXmlDocument;
       class function Element(const aName: Utf8String): IXmlElement; overload;
       class function Element(const aName: Utf8String; const aText: Utf8String): IXmlElement; overload;
@@ -143,6 +146,13 @@ implementation
   class function Xml.Element(const aName: Utf8String): IXmlElement;
   begin
     result := TXmlElement.Create(aName);
+  end;
+
+
+  { - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }
+  class function Xml.CDATA(const aText: Utf8String): IXmlCDATA;
+  begin
+    result := TXmlCDATA.Create(aText);
   end;
 
 
